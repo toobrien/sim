@@ -51,8 +51,8 @@ if __name__ == "__main__":
             col = 2
         )
 
-        print(f"mu, std {name}:\t{mean(hist):0.2f}\t{std(hist):0.2f}")
+        print(f"mu, std, sum {name}:\t{mean(hist):0.2f}\t{std(hist):0.2f}\t{cumsum(hist)}")
 
-    fig.show()
+    #fig.show()
 
     print(f"{time() - t0:0.2f}s")
