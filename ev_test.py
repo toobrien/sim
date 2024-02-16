@@ -11,8 +11,8 @@ if __name__ == "__main__":
     fig     = make_subplots(2, 1)
     steps   = [ 1, -1 ]
     x       = range(steps)
-    walk    = choices(population = steps, weights = [ 0.5, 0.5 ], k = steps)
-    ev_plus = choices(population = steps, weights = [ p, 1 - p ], k = steps)
+    walk    = cumsum(choices(population = steps, weights = [ 0.5, 0.5 ], k = steps))
+    ev_plus = cumsum(choices(population = steps, weights = [ p, 1 - p ], k = steps))
     traces  = [
                 ( walk, 1, 1, "#FF0000", "walk" )
                 ( ev_plus, 2, 1, "#0000FF", "ev+" )
