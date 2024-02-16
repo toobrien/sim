@@ -6,15 +6,15 @@ from    plotly.subplots         import  make_subplots
 
 if __name__ == "__main__":
 
-    steps   = 100
+    n_steps = 100
     p       = 0.55
     fig     = make_subplots(2, 1)
-    steps   = [ 1, -1 ]
-    x       = range(steps)
-    walk    = cumsum(choices(population = steps, weights = [ 0.5, 0.5 ], k = steps))
-    ev_plus = cumsum(choices(population = steps, weights = [ p, 1 - p ], k = steps))
+    units   = [ 1, -1 ]
+    x       = list(range(n_steps))
+    walk    = cumsum(choices(population = units, weights = [ 0.5, 0.5 ], k = n_steps))
+    ev_plus = cumsum(choices(population = units, weights = [ p, 1 - p ], k = n_steps))
     traces  = [
-                ( walk, 1, 1, "#FF0000", "walk" )
+                ( walk, 1, 1, "#FF0000", "walk" ),
                 ( ev_plus, 2, 1, "#0000FF", "ev+" )
             ]
 
