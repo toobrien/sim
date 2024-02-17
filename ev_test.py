@@ -10,14 +10,14 @@ if __name__ == "__main__":
 
     n_trials    = 1000
     n_charts    = 30
-    n_steps     = 1000
+    n_steps     = 500
     sigma       = 0.01 * sqrt(1/390)
     drift       = 25e-6
-    a_          = []
-    b_          = []
-    b_km        = []
-    k           = 0
-    m           = 100
+    a           = []
+    b           = []
+    b_0j        = []
+    b_jn        = []
+    j           = 100
     x           = list(range(n_steps))
     locs        = [ 0. for i in x ]
     fig         = make_subplots(
@@ -30,24 +30,25 @@ if __name__ == "__main__":
     fig.update_layout(autosize = True, height = n_charts * 600)
     
 
-    for i in range(k, m):
+    for i in range(0, j):
 
         locs[i] = drift
 
     for i in range(n_trials):
 
-        a       = cumsum([ normal(loc = 0, scale = sigma) for i in x ])
-        b       = cumsum([ normal(loc = locs[i], scale = sigma) for i in x ])
+        a_ = cumsum([ normal(loc = 0, scale = sigma) for i in x ])
+        b_ = cumsum([ normal(loc = locs[i], scale = sigma) for i in x ])
 
-        a_.append(a[-1])
-        b_.append(b[-1])
-        b_km.append(b[m - 1] - b[k])
+        a.append(a_[-1])
+        b.append(b_[-1])
+        b_0j.append(b_[j - 1])
+        b_jn.append(b_[-1] - b_[j])
 
         if i < n_charts:
 
             for trace in [ 
-                ( a, "a", "#FF0000" ), 
-                ( b, "b", "#0000FF" )
+                ( a_, "a", "#FF0000" ), 
+                ( b_, "b", "#0000FF" )
             ]:
 
                 fig.add_trace(
@@ -65,33 +66,24 @@ if __name__ == "__main__":
 
     fig.show()
 
-    a_perf  = summarize(a_)
-    b_perf  = summarize(b_)
-    km_perf = summarize(b_km)
+    a_perf      = summarize(a)
+    b_perf      = summarize(b)
+    b_0j_perf   = summarize(b_0j)
+    b_jn_perf   = summarize(b_jn)
+
 
     print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}")
     print(f"{'a:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
     print(f"{'b:':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
-    print(f"{'b_km:':>10}{km_perf[0]:10.5f}{km_perf[1]:10.5f}{km_perf[2]:10.2f}")
+    print(f"{'b_start:':>10}{b_0j_perf[0]:10.5f}{b_0j_perf[1]:10.5f}{b_0j_perf[2]:10.2f}")
+    print(f"{'b_end:':>10}{b_jn_perf[0]:10.5f}{b_jn_perf[1]:10.5f}{b_jn_perf[2]:10.2f}")
 
     fig = ff.create_distplot(
-        [ a_, b_, b_km ],
-        [ "a", "b", "b_km" ],
+        [ a, b, b_0j, b_jn ],
+        [ "a", "b", "b_0j", "b_jn" ],
         curve_type  = "normal",
         bin_size    = 1e-3,
         show_hist   = False
     )
-
-    '''
-    fig = go.Figure()
-
-    for trace in [ 
-        ( a_,   "a" ),
-        ( b_,   "b" ),
-        ( b_km, "b_km" )
-    ]:
-
-        fig.add_trace(go.Histogram(x = trace[0], name = trace[1]))
-    '''
 
     fig.show()
