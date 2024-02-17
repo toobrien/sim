@@ -1,24 +1,25 @@
-from    math                    import  sqrt
 from    numpy                   import  cumsum
 from    numpy.random            import  normal
 import  plotly.figure_factory   as      ff
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
+from    time                    import  time
 from    utils.performance       import  summarize
 
 
 if __name__ == "__main__":
 
-    n_trials    = 1000
+    t0          = time()
+    n_trials    = 252
     n_charts    = 30
-    n_steps     = 500
-    sigma       = 0.01 * sqrt(1/390)
-    drift       = 25e-6
+    n_steps     = 390
+    sigma       = 4.8e-4
+    drift       = 8.3e-6
     a           = []
     b           = []
     b_0j        = []
     b_jn        = []
-    j           = 100
+    j           = 60
     x           = list(range(n_steps))
     locs        = [ 0. for i in x ]
     fig         = make_subplots(
@@ -76,8 +77,8 @@ if __name__ == "__main__":
     print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}")
     print(f"{'a:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
     print(f"{'b:':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
-    print(f"{'b_start:':>10}{b_0j_perf[0]:10.5f}{b_0j_perf[1]:10.5f}{b_0j_perf[2]:10.2f}")
-    print(f"{'b_end:':>10}{b_jn_perf[0]:10.5f}{b_jn_perf[1]:10.5f}{b_jn_perf[2]:10.2f}")
+    print(f"{'b_sig:':>10}{b_0j_perf[0]:10.5f}{b_0j_perf[1]:10.5f}{b_0j_perf[2]:10.2f}")
+    print(f"{'b_noise:':>10}{b_jn_perf[0]:10.5f}{b_jn_perf[1]:10.5f}{b_jn_perf[2]:10.2f}")
 
     fig = ff.create_distplot(
         [ a, b, b_0j, b_jn ],
@@ -88,3 +89,5 @@ if __name__ == "__main__":
     )
 
     fig.show()
+
+    print(f"{time() - t0:0.1f}s")
