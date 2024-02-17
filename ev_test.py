@@ -19,6 +19,8 @@ if __name__ == "__main__":
     b           = []
     b_0j        = []
     b_jn        = []
+    equity_sig  = []
+    equity_all  = []
     j           = 60
     x           = list(range(n_steps))
     locs        = [ 0. for i in x ]
@@ -45,6 +47,9 @@ if __name__ == "__main__":
         b.append(b_[-1])
         b_0j.append(b_[j - 1])
         b_jn.append(b_[-1] - b_[j])
+
+        equity_sig.append(b_[j - 1])
+        equity_all.append(b_[-1])
 
         if i < n_charts:
 
@@ -75,18 +80,38 @@ if __name__ == "__main__":
 
 
     print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}")
-    print(f"{'a:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
+    print(f"{'r:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
     print(f"{'b:':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
     print(f"{'b_sig:':>10}{b_0j_perf[0]:10.5f}{b_0j_perf[1]:10.5f}{b_0j_perf[2]:10.2f}")
     print(f"{'b_noise:':>10}{b_jn_perf[0]:10.5f}{b_jn_perf[1]:10.5f}{b_jn_perf[2]:10.2f}")
 
     fig = ff.create_distplot(
         [ a, b, b_0j, b_jn ],
-        [ "a", "b", "b_0j", "b_jn" ],
+        [ "r", "b", "b_sig", "b_noise" ],
         curve_type  = "normal",
         bin_size    = 1e-3,
         show_hist   = False
     )
+
+    fig.show()
+
+    fig = go.Figure()
+
+    for trace in [
+        ( cumsum(equity_sig), "pnl_sig", "#FF00FF" ),
+        ( cumsum(equity_all), "pnl_all", "#0000FF" )
+    ]:
+        
+        fig.add_trace(
+            go.Scatter(
+                {
+                    "x":    x,
+                    "y":    trace[0],
+                    "name": trace[1],
+                    "marker":   { "color": trace[2] }
+                }
+            )
+        )
 
     fig.show()
 
