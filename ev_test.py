@@ -1,5 +1,6 @@
-from    random                  import  choices
+from    math                    import  sqrt
 from    numpy                   import  cumsum, mean, std
+from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    time                    import  time
@@ -7,52 +8,49 @@ from    time                    import  time
 
 if __name__ == "__main__":
 
-    t0          = time()
-    n_trials    = 10000
-    n_steps     = 100
-    p           = 0.51
-    fig         = make_subplots(2, 2)
-    units       = [ 1, -1 ]
+    n_trials    = 30
+    n_steps     = 390
+    sigma       = 0.01 * sqrt(1/390)
+    drift       = 1e-5
+    k           = 0
+    m           = 100
     x           = list(range(n_steps))
-    walk        = [ cumsum(choices(population = units, weights = [ 0.5, 0.5 ], k = n_steps)) for i in range(n_trials) ]
-    ev_plus     = [ cumsum(choices(population = units, weights = [ p, 1 - p ], k = n_steps)) for i in range(n_trials) ]
-    traces      = [
-                    ( walk, 1, "#FF0000", "walk" ),
-                    ( ev_plus, 2, "#0000FF", "ev+" )
-                ]
+    locs        = [ 0. for i in x ]
+    fig         = make_subplots(
+                    rows                = n_trials,
+                    cols                = 1,
+                    subplot_titles      = tuple( x + 1 for x in range(n_trials) ),
+                    vertical_spacing    = 0.005
+                )
+    
+    fig.update_layout(autosize = True, height = n_trials * 800)
+    
 
-    for trace in traces:
+    for i in range(k, m):
 
-        ys      = trace[0]
-        row     = trace[1]
-        color   = trace[2]
-        name    = trace[3]
-        hist    = [ y[-1] for y in ys ]
+        locs[i] = drift
 
-        for y in ys:
+    for i in range(n_trials):
+
+        a = cumsum([ normal(loc = 0, scale = sigma) for i in x ])
+        b = cumsum([ normal(loc = locs[i], scale = sigma) for i in x ])
+
+        for trace in [ 
+            ( a, "a", "#FF0000" ), 
+            ( b, "b", "#0000FF" )
+        ]:
 
             fig.add_trace(
-                go.Scattergl(
+                go.Scatter(
                     {
                         "x":        x,
-                        "y":        y,
-                        "mode":     "markers",
-                        "marker":   { "color": color },
-                        "name":     name
+                        "y":        trace[0],
+                        "name":     f"{trace[1]} {i + 1}",
+                        "marker":   { "color": trace[2] }
                     }
                 ),
-                row = trace[1],
+                row = i + 1,
                 col = 1
             )
 
-        fig.add_trace(
-            go.Histogram(x = hist, name = name),
-            row = row,
-            col = 2
-        )
-
-        print(f"mu, std, sum {name}:\t{mean(hist):0.2f}\t{std(hist):0.2f}\t{sum(hist)}")
-
-    #fig.show()
-
-    print(f"{time() - t0:0.2f}s")
+    fig.show()
