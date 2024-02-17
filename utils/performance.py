@@ -1,7 +1,7 @@
 from numpy import mean, std
 
 
-def summarize(series: list, difference = False):
+def summarize(series: list, difference = False, rfr = 0):
 
     returns = series
 
@@ -12,5 +12,6 @@ def summarize(series: list, difference = False):
     mu      = mean(returns)
     sigma   = std(returns)
     total   = sum(returns)
+    sharpe  = (mu - rfr) / sigma
 
-    return ( mu, sigma, total )
+    return ( mu, sigma, total, sharpe )

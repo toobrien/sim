@@ -1,3 +1,4 @@
+from    math                    import  sqrt
 from    numpy                   import  cumsum
 from    numpy.random            import  normal
 import  plotly.figure_factory   as      ff
@@ -19,8 +20,6 @@ if __name__ == "__main__":
     b           = []
     b_0j        = []
     b_jn        = []
-    equity_sig  = []
-    equity_all  = []
     j           = 60
     x           = list(range(n_steps))
     locs        = [ 0. for i in x ]
@@ -48,9 +47,6 @@ if __name__ == "__main__":
         b_0j.append(b_[j - 1])
         b_jn.append(b_[-1] - b_[j])
 
-        equity_sig.append(b_[j - 1])
-        equity_all.append(b_[-1])
-
         if i < n_charts:
 
             for trace in [ 
@@ -73,17 +69,17 @@ if __name__ == "__main__":
 
     fig.show()
 
-    a_perf      = summarize(a)
-    b_perf      = summarize(b)
-    b_0j_perf   = summarize(b_0j)
-    b_jn_perf   = summarize(b_jn)
+    r           = 0.05/252
+    a_perf      = summarize(a, rfr = r)
+    b_perf      = summarize(b, rfr = r)
+    b_0j_perf   = summarize(b_0j, rfr = r)
+    b_jn_perf   = summarize(b_jn, rfr = r)
 
-
-    print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}")
-    print(f"{'r:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
-    print(f"{'b:':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
-    print(f"{'b_sig:':>10}{b_0j_perf[0]:10.5f}{b_0j_perf[1]:10.5f}{b_0j_perf[2]:10.2f}")
-    print(f"{'b_noise:':>10}{b_jn_perf[0]:10.5f}{b_jn_perf[1]:10.5f}{b_jn_perf[2]:10.2f}")
+    print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}{'sharpe':>10}")
+    print(f"{'r:':>10}{a_perf[0]:10.4f}{a_perf[1]:10.4f}{a_perf[2]:10.2f}{a_perf[3]*sqrt(252):10.2f}")
+    print(f"{'b:':>10}{b_perf[0]:10.4f}{b_perf[1]:10.4f}{b_perf[2]:10.2f}{b_perf[3]*sqrt(252):10.2f}")
+    print(f"{'b_sig:':>10}{b_0j_perf[0]:10.4f}{b_0j_perf[1]:10.4f}{b_0j_perf[2]:10.2f}{b_0j_perf[3]*sqrt(252):10.2f}")
+    print(f"{'b_noise:':>10}{b_jn_perf[0]:10.4f}{b_jn_perf[1]:10.4f}{b_jn_perf[2]:10.2f}{b_jn_perf[3]*sqrt(252):10.2f}")
 
     fig = ff.create_distplot(
         [ a, b, b_0j, b_jn ],
@@ -98,14 +94,14 @@ if __name__ == "__main__":
     fig = go.Figure()
 
     for trace in [
-        ( cumsum(equity_sig), "pnl_sig", "#FF00FF" ),
-        ( cumsum(equity_all), "pnl_all", "#0000FF" )
+        ( cumsum(b_0j), f"pnl_b_sig_only, sharpe = {b_0j_perf[3]*sqrt(242):0.2f}", "#FF00FF" ),
+        ( cumsum(b), f"pnl_b, sharpe = {b_perf[3]*sqrt(242):0.2f}", "#0000FF" )
     ]:
         
         fig.add_trace(
             go.Scatter(
                 {
-                    "x":    x,
+                    "x":    [ i for i in range(n_trials) ],
                     "y":    trace[0],
                     "name": trace[1],
                     "marker":   { "color": trace[2] }
