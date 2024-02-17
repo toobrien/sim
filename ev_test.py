@@ -6,6 +6,7 @@ import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    utils.performance       import  summarize
 
+
 if __name__ == "__main__":
 
     n_trials    = 1000
