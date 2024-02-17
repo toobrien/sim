@@ -37,18 +37,18 @@ if __name__ == "__main__":
 
     for i in range(n_trials):
 
-        a = [ normal(loc = 0, scale = sigma) for i in x ]
-        b = [ normal(loc = locs[i], scale = sigma) for i in x ]
+        a       = cumsum([ normal(loc = 0, scale = sigma) for i in x ])
+        b       = cumsum([ normal(loc = locs[i], scale = sigma) for i in x ])
 
         a_.append(a[-1])
         b_.append(b[-1])
-        b_km.append(cumsum(b[k:m])[-1])
+        b_km.append(b[m - 1] - b[k])
 
         if i < n_charts:
 
             for trace in [ 
-                ( cumsum(a), "a", "#FF0000" ), 
-                ( cumsum(b), "b", "#0000FF" )
+                ( a, "a", "#FF0000" ), 
+                ( b, "b", "#0000FF" )
             ]:
 
                 fig.add_trace(
@@ -70,10 +70,20 @@ if __name__ == "__main__":
     b_perf  = summarize(b_)
     km_perf = summarize(b_km)
 
-    print(f"a:  {a_perf[0]:0.5f}\t{a_perf[1]:0.5f}")
-    print(f"b:  {b_perf[0]:0.5f}\t{b_perf[1]:0.5f}")
-    print(f"km: {km_perf[0]:0.5f}\t{km_perf[1]:0.5f}")
+    print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}")
+    print(f"{'a:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
+    print(f"{'b':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
+    print(f"{'b_km':>10}{km_perf[0]:10.5f}{km_perf[1]:10.5f}{km_perf[2]:10.2f}")
 
+    fig = ff.create_distplot(
+        [ a_, b_, b_km ],
+        [ "a", "b", "b_km" ],
+        curve_type  = "normal",
+        bin_size    = 1e-3,
+        show_hist   = False
+    )
+
+    '''
     fig = go.Figure()
 
     for trace in [ 
@@ -83,5 +93,6 @@ if __name__ == "__main__":
     ]:
 
         fig.add_trace(go.Histogram(x = trace[0], name = trace[1]))
+    '''
 
     fig.show()

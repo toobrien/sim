@@ -11,5 +11,6 @@ def summarize(series: list, difference = False):
 
     mu      = mean(returns)
     sigma   = std(returns)
+    total   = sum(returns)
 
-    return ( mu, sigma )
+    return ( mu, sigma, total )
