@@ -1,17 +1,16 @@
 from    math                    import  sqrt
-from    numpy                   import  cumsum, mean, std
+from    numpy                   import  cumsum
 from    numpy.random            import  normal
 import  plotly.figure_factory   as      ff
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
-from    time                    import  time
 from    utils.performance       import  summarize
 
 if __name__ == "__main__":
 
     n_trials    = 1000
-    n_charts    = 50
-    n_steps     = 390
+    n_charts    = 30
+    n_steps     = 1000
     sigma       = 0.01 * sqrt(1/390)
     drift       = 25e-6
     a_          = []
@@ -25,7 +24,7 @@ if __name__ == "__main__":
                     rows                = n_charts,
                     cols                = 1,
                     subplot_titles      = tuple( x + 1 for x in range(n_charts) ),
-                    vertical_spacing    = 0.001
+                    vertical_spacing    = 0.0025
                 )
     
     fig.update_layout(autosize = True, height = n_charts * 600)
@@ -72,8 +71,8 @@ if __name__ == "__main__":
 
     print(f"{'':10}{'mu':>10}{'sigma':>10}{'total':>10}")
     print(f"{'a:':>10}{a_perf[0]:10.5f}{a_perf[1]:10.5f}{a_perf[2]:10.2f}")
-    print(f"{'b':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
-    print(f"{'b_km':>10}{km_perf[0]:10.5f}{km_perf[1]:10.5f}{km_perf[2]:10.2f}")
+    print(f"{'b:':>10}{b_perf[0]:10.5f}{b_perf[1]:10.5f}{b_perf[2]:10.2f}")
+    print(f"{'b_km:':>10}{km_perf[0]:10.5f}{km_perf[1]:10.5f}{km_perf[2]:10.2f}")
 
     fig = ff.create_distplot(
         [ a_, b_, b_km ],
