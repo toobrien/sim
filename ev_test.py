@@ -10,11 +10,11 @@ from    utils.performance       import  summarize
 if __name__ == "__main__":
 
     t0          = time()
-    n_trials    = 1008
+    n_trials    = 1080
     n_charts    = 30
     n_steps     = 390
     sigma       = 4.8e-4
-    drift       = 1.666667e-5
+    drift       = 1.67e-5
     a           = []
     b           = []
     b_0j        = []
