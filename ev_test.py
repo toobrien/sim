@@ -94,8 +94,9 @@ if __name__ == "__main__":
     fig = go.Figure()
 
     for trace in [
-        ( cumsum(b_0j), f"pnl_b_sig_only, sharpe = {b_0j_perf[3]*sqrt(242):0.2f}", "#FF00FF" ),
-        ( cumsum(b), f"pnl_b, sharpe = {b_perf[3]*sqrt(242):0.2f}", "#0000FF" )
+        ( cumsum(b_0j), f"pnl_b_sig_only, sharpe = {b_0j_perf[3]*sqrt(252):0.2f}", "#FF00FF" ),
+        ( cumsum(b), f"pnl_b, sharpe = {b_perf[3]*sqrt(252):0.2f}", "#0000FF" ),
+        ( cumsum(a), f"pnl_a, sharpe = {a_perf[3]*sqrt(252):0.2f}", "#FF0000")
     ]:
         
         fig.add_trace(
