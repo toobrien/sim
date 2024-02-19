@@ -8,6 +8,7 @@ from    sys                     import  argv
 
 PLOT            = int(argv[1])
 DOLLAR_STATS    = int(argv[2])
+N_TRIALS        = int(argv[3])
 
 if __name__ == "__main__":
     
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     rfr             = 0.0392
 
     reward          = 200
-    risk            = 500 / 2
+    risk            = 1000 / 2
     max_dd          = 2000
     max_dd_log      = log(1 - max_dd / es_price)
 
@@ -35,9 +36,9 @@ if __name__ == "__main__":
     names[-1]       = "strategy"
 
 
-    print(f"{'es_price:':<20}{es_price:<10.2f}")
+    print(f"{'es_price:':<20}{es_price / 50:<10.2f}")
     print(f"{'reward:':<20}${reward:<10.2f}")
-    print(f"{'risk (p95):':<20}${risk * 2:<10.2f}")
+    print(f"{'risk (p98):':<20}${risk * 2:<10.2f}")
     print(f"{'max dd:':<20}${max_dd:<10.2f}")
     print("\n")
     
@@ -49,7 +50,7 @@ if __name__ == "__main__":
 
     else:
 
-        print(f"{'name':<15}{'sharpe':<15}{'mean':<15}{'stdev':<15}{'failure (%)':<15}\n")
+        print(f"{'name':<15}{'sharpe':<15}{'mean (bp)':<15}{'stdev (bp)':<15}{'failure (%)':<15}\n")
         print(f"{'spx':<15}{spx_sharpe:<15.2f}{spx_mu / dpy:<15.4f}{spx_sigma * sqrt(1 / dpy):<15.4f}{'-':<15}")
 
     colors = {
@@ -65,7 +66,6 @@ if __name__ == "__main__":
     }
 
     n_charts        = len(colors) + 1
-    n_trials        = 10000
     x               = [ i for i in range(dpy) ]
     fig             = make_subplots(
                         rows                = n_charts,
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         sharpe  = sharpes[i]
         sigma   = sigmas[i]
 
-        for i in range(n_trials):
+        for i in range(N_TRIALS):
 
             color   = colors[sharpe]
             y       = list(cumsum(normal(loc = strat_mu, scale = sigma, size = dpy)))
@@ -126,7 +126,7 @@ if __name__ == "__main__":
                 fig.add_trace(trace, row = n_charts, col = 1)
 
         row             += 1
-        failure_rate    =  failed / n_trials * 100
+        failure_rate    =  failed / N_TRIALS * 100
 
         if DOLLAR_STATS:
 
