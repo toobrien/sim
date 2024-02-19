@@ -10,6 +10,7 @@ PLOT            = int(argv[1])
 DOLLAR_STATS    = int(argv[2])
 N_TRIALS        = int(argv[3])
 
+
 if __name__ == "__main__":
     
     dpy             = 252
@@ -139,6 +140,3 @@ if __name__ == "__main__":
     if PLOT:
 
         fig.show()
-
-    pass
-
