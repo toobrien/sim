@@ -17,6 +17,7 @@ if __name__ == "__main__":
     es_price        = 5000 * 50
     rfr             = 0.0392
 
+    leverage        = 1.0
     reward          = 200
     risk            = 1000 / 2
     max_dd          = 2000
@@ -38,6 +39,7 @@ if __name__ == "__main__":
 
 
     print(f"{'es_price:':<20}{es_price / 50:<10.2f}")
+    print(f"{'leverage:':<20}{leverage:0.2f}")
     print(f"{'reward:':<20}${reward:<10.2f}")
     print(f"{'risk (p98):':<20}${risk * 2:<10.2f}")
     print(f"{'max dd:':<20}${max_dd:<10.2f}")
@@ -92,7 +94,7 @@ if __name__ == "__main__":
         for i in range(N_TRIALS):
 
             color   = colors[sharpe]
-            y       = list(cumsum(normal(loc = strat_mu, scale = sigma, size = dpy)))
+            y       = list(leverage * cumsum(normal(loc = strat_mu, scale = sigma, size = dpy)))
             x_      = x
 
             for j in range(len(y)):
