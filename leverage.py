@@ -2,18 +2,20 @@ from    math                    import  e, log, sqrt
 from    numpy                   import  cumsum
 from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
+from    plotly.subplots         import  make_subplots
 
 
 if __name__ == "__main__":
     
     dpy             = 252
+    es_price        = 5000 * 50
+    rfr             = 0.0392
+    
     reward          = 200
     risk            = 500 / 2
-    es_price        = 5000 * 50
     max_dd          = 2000
     max_dd_log      = log(1 - max_dd / es_price)
 
-    rfr             = 0.0392
     spx_sigma       = 0.1425
     spx_mu          = 0.101
     spx_sharpe      = ((spx_mu - rfr) / spx_sigma)
@@ -23,15 +25,18 @@ if __name__ == "__main__":
     strat_mu        = log(1 + reward / es_price)
     strat_sharpe    = ((strat_mu - rfr) / strat_sigma) * sqrt(dpy)
 
-    print(f"{'':<10}{'mean':<10}{'stdev':<10}{'sharpe':<10}")
-    print(f"{'spx:':<10}{spx_mu / dpy:>10.4f}{spx_sigma * sqrt(1 / dpy):>10.4f}{spx_sharpe:>10.2f}")
-    print(f"{'strat:':<10}{strat_mu:>10.4f}{strat_sigma:>10.4f}{strat_sharpe:10.2f}\n")
+    sharpes         = [ 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, strat_sharpe ]
+    sigmas          = [ ((strat_mu - rfr) * sqrt(dpy)) / sharpe for sharpe in sharpes ]
 
-    n_trials        = 10
-    x               = [ i for i in range(dpy) ]
-    fig             = go.Figure()
+    print(f"{'':<10}{'mean':>10}{'stdev':>10}")
+    print(f"{spx_sharpe:<10.2f}{spx_mu / dpy:>10.4f}{spx_sigma * sqrt(1 / dpy):>10.4f}")
 
-    print(f"{'sharpe':>10}{'failed%':>10}")
+    for i in range(len(sharpes)):
+
+        print(f"{sharpes[i]:<10.2f}{strat_mu:>10.4f}{sigmas[i]:>10.4f}")
+
+    print()
+    print(f"{'sharpe':>15}{'failed (%)':>15}")
 
     colors = {
         0.5:            "#0f112c",
@@ -45,38 +50,66 @@ if __name__ == "__main__":
         
     }
 
-    for sharpe in [ 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, strat_sharpe]:
+    n_charts        = len(colors) + 1
+    n_trials        = 10
+    x               = [ i for i in range(dpy) ]
+    fig             = make_subplots(
+                        rows                = n_charts,
+                        cols                = 1,
+                        subplot_titles      = tuple( f"{key:0.2f}" for key in colors.keys() ),
+                        vertical_spacing    = 0.01
+                    )
+    
+    fig.update_layout(
+        autosize    = True,
+        height      = n_charts * 400
+    )
+
+    row = 1
+
+    for i in range(len(sharpes)):
 
         failed  = 0
-        sigma   = ((strat_mu - rfr) * sqrt(dpy)) / sharpe
+        sharpe  = sharpes[i]
+        sigma   = sigmas[i]
 
         for i in range(n_trials):
 
             color   = colors[sharpe]
-            y       = cumsum(normal(loc = strat_mu, scale = sigma, size = dpy))
-            
-            if min(y) <= max_dd_log:
+            y       = list(cumsum(normal(loc = strat_mu, scale = sigma, size = dpy)))
+            x_      = x
 
-                failed  +=  1
-                color   =   "#FF0000"
+            for j in range(len(y)):
 
-            #y = [ es_price * e**y_ for y_ in y ]
+                if y[j] <= max_dd_log:
 
-            fig.add_trace(
-                go.Scattergl(
-                    {
-                        "x":        x,
-                        "y":        y,
-                        "marker":   { "color": color },
-                        "mode":     "markers",
-                        "name":     f"{i} sharpe = {sharpe:0.2f}"
-                    }
-                )
+                    failed  +=  1
+                    color   =   "#FF0000"
+                    y       =   y[:j + 1]
+                    x_      =   x[:j + 1]
+
+                    break
+
+
+            y = [ es_price * e**j - es_price for j in y ]
+
+            trace = go.Scatter(
+                {
+                    "x":        x_,
+                    "y":        y,
+                    "marker":   { "color": color },
+                    "mode":     "markers",
+                    "name":     f"{i}<br>sharpe = {sharpe:0.2f}"
+                }
             )
-        
-        print(f"{sharpe:>10.2f}{(failed / n_trials)*100:>10.2f}")
-        
 
+            fig.add_trace(trace, row = row, col = 1)
+            fig.add_trace(trace, row = n_charts, col = 1)
+
+        row += 1
+        
+        print(f"{sharpe:>15.2f}{(failed / n_trials)*100:>15.2f}")
+        
     fig.show()
 
     pass
