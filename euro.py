@@ -108,5 +108,3 @@ fig.add_trace(
 )
 
 fig.show()
-
-pass
