@@ -17,10 +17,10 @@ if __name__ == "__main__":
     es_price        = 5000 * 50
     rfr             = 0.0392
 
-    leverage        = 0.2
-    reward          = 120
-    risk            = 605
-    max_dd          = 1250
+    leverage        = 1.0
+    reward          = 200
+    risk            = 500
+    max_dd          = 2000
     max_dd_log      = log(1 - max_dd / es_price)
 
     spx_sigma       = 0.1425
