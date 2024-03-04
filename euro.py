@@ -72,12 +72,14 @@ for time in times:
 
     r2 = model.score(x, y)
 
+    '''
     if time == "12:30:00":
 
         fig = px.scatter(x = to_ret[time], y = y, trendline = "ols")
         fig.show()
 
-    #print(f"{time:<15}{b:<8.4f}{a:<8.4f}{r2:<8.4f}")
+    print(f"{time:<15}{b:<8.4f}{a:<8.4f}{r2:<8.4f}")
+    '''
 
     b_.append(b)
     r2_.append(r2)
