@@ -9,27 +9,36 @@ from    sys                     import  argv
 PLOT            = int(argv[1])
 DOLLAR_STATS    = int(argv[2])
 N_TRIALS        = int(argv[3])
+MODE            = "NDX"
+ASSETS          = {
+
+    "SPX":      ( 5000, 50, 0.1425, 0.101 ),
+    "NDX":      ( 17000, 20, 0.1839, 0.2254 )
+}
 
 
 if __name__ == "__main__":
     
+    asset           = ASSETS[MODE]
     dpy             = 252
-    es_price        = 5000 * 50
+    ul_multiplier   = asset[1]
+    ul_price        = asset[0] * ul_multiplier
     rfr             = 0.0392
+    #rfr             = 0
 
     leverage        = 1.0
     reward          = 200
-    risk            = 500
-    max_dd          = 2000
-    max_dd_log      = log(1 - max_dd / es_price)
+    risk            = 312.5
+    max_dd          = 10000
+    max_dd_log      = log(1 - max_dd / ul_price)
 
-    spx_sigma       = 0.1425
-    spx_mu          = 0.101
-    spx_sharpe      = ((spx_mu - rfr) / spx_sigma)
+    ul__sigma       = asset[2]
+    ul__mu          = asset[3]
+    ul__sharpe      = ((ul__mu - rfr) / ul__sigma)
 
     rfr             = rfr / dpy
-    strat_sigma     = log(1 + risk / es_price)
-    strat_mu        = log(1 + reward / es_price)
+    strat_sigma     = log(1 + risk / ul_price)
+    strat_mu        = log(1 + reward / ul_price)
     strat_sharpe    = ((strat_mu - rfr) / strat_sigma) * sqrt(dpy)
 
     sharpes         = [ 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, strat_sharpe ]
@@ -38,7 +47,7 @@ if __name__ == "__main__":
     names[-1]       = "strategy"
 
 
-    print(f"{'es_price:':<20}{es_price / 50:<10.2f}")
+    print(f"{'ul_price:':<20}{ul_price / ul_multiplier:<10.2f}")
     print(f"{'leverage:':<20}{leverage:0.2f}")
     print(f"{'reward:':<20}${reward:<10.2f}")
     print(f"{'risk (p98):':<20}${risk * 2:<10.2f}")
@@ -49,12 +58,12 @@ if __name__ == "__main__":
     if DOLLAR_STATS:
     
         print(f"{'name':<15}{'sharpe':<15}{'mean ($)':<15}{'stdev ($)':<15}{'failure (%)':<15}\n")
-        print(f"{'spx':<15}{spx_sharpe:<15.2f}{es_price * (e**(spx_mu / dpy) - 1):<15.2f}{es_price * (e**(spx_sigma * sqrt(1 / dpy)) - 1):<15.2f}{'-':<15}")
+        print(f"{'ul_':<15}{ul__sharpe:<15.2f}{ul_price * (e**(ul__mu / dpy) - 1):<15.2f}{ul_price * (e**(ul__sigma * sqrt(1 / dpy)) - 1):<15.2f}{'-':<15}")
 
     else:
 
         print(f"{'name':<15}{'sharpe':<15}{'mean (bp)':<15}{'stdev (bp)':<15}{'failure (%)':<15}\n")
-        print(f"{'spx':<15}{spx_sharpe:<15.2f}{spx_mu / dpy:<15.4f}{spx_sigma * sqrt(1 / dpy):<15.4f}{'-':<15}")
+        print(f"{'ul_':<15}{ul__sharpe:<15.2f}{ul__mu / dpy:<15.4f}{ul__sigma * sqrt(1 / dpy):<15.4f}{'-':<15}")
 
     colors = {
         0.5:            "#0f112c",
@@ -91,6 +100,10 @@ if __name__ == "__main__":
         sharpe  = sharpes[i]
         sigma   = sigmas[i]
 
+        if sigma <= 0:
+
+            continue
+
         for i in range(N_TRIALS):
 
             color   = colors[sharpe]
@@ -113,7 +126,7 @@ if __name__ == "__main__":
 
                 if DOLLAR_STATS:
 
-                    y = [ es_price * e**j - es_price for j in y ]
+                    y = [ ul_price * e**j - ul_price for j in y ]
 
                 trace = go.Scatter(
                     {
@@ -133,7 +146,7 @@ if __name__ == "__main__":
 
         if DOLLAR_STATS:
 
-            print(f"{name:<15}{sharpe:<15.2f}{es_price * (e**(strat_mu) - 1):<15.2f}{es_price * (e**(sigma) - 1):<15.2f}{failure_rate:<15.1f}")
+            print(f"{name:<15}{sharpe:<15.2f}{ul_price * (e**(strat_mu) - 1):<15.2f}{ul_price * (e**(sigma) - 1):<15.2f}{failure_rate:<15.1f}")
 
         else:
             

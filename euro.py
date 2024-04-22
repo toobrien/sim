@@ -1,6 +1,6 @@
 from    enum                    import  IntEnum
 from    math                    import  log
-from    numpy                   import  arange, array
+from    numpy                   import  array
 from    polars                  import  col
 import  plotly.express          as      px
 import  plotly.graph_objects    as      go
@@ -42,6 +42,10 @@ if __name__ == "__main__":
 
             time    = row[r.time]
             close   = log(row[r.close])
+
+            #if abs(close - open_) < 0.01:
+
+                #continue
 
             if time not in to_ret:
 
