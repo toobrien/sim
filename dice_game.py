@@ -1,5 +1,5 @@
 from    random                  import  choices
-from    numpy                   import  cumsum, mean
+from    numpy                   import  cumsum, mean, std
 import  plotly.figure_factory   as      ff
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
@@ -91,7 +91,7 @@ def example_b():
 
     t0 = time()
     rolls           = 10_000
-    traders         = 1_000
+    traders         = 10_000
     fair_sides      = [ -3, -2, -1, 1, 2, 3 ]
     edge_sides      = [ -3, -2, -1, 1.25, 2, 3 ]
     probs           = [ 0.05, 0.20, 0.25, 0.25, 0.20, 0.05 ]
@@ -114,8 +114,10 @@ def example_b():
 
     fig.show()
     
-    print(f"average (fair): {mean(fair_sample)}:0.2f")
-    print(f"average (edge): {mean(edge_sample)}:0.2f")
+    print(f"average (fair): {mean(fair_sample):0.2f}")
+    print(f"stdev (fair):   {std(fair_sample):0.2f}")
+    print(f"average (edge): {mean(edge_sample):0.2f}")
+    print(f"stdev (edge):   {std(edge_sample):0.2f}")
     print(f"{time() - t0:0.1f}s")
 
 
