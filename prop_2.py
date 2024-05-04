@@ -85,7 +85,7 @@ def sim_runs(
         months_in_eval  = ceil(target_met_index / DPM)
         months_in_pa    = ceil((len(run) - target_met_index) / DPM)
         total_fees      = total_fees + (months_in_eval * EVAL_MONTHLY_FEE) + (months_in_pa * PA_MONTHLY_FEE)
-        total_return    = run[-1]
+        total_return    = run[-1] if len(run) > 1 else equity
         
         returns.append(total_return)
         fees.append(total_fees)
@@ -145,8 +145,6 @@ if __name__ == "__main__":
     for reward in rewards:
 
         mu = reward * ES_MU_DAILY
-
-        line = f"{reward:<10}"
 
         for risk in risks:
 
