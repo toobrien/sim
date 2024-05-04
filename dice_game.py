@@ -18,29 +18,30 @@ if __name__ == "__main__":
     fig.add_trace(
         go.Scattergl(
             {
-                "x":        list(range(len(avg))),
-                "y":        avg,
-                "name":     "average (fair)",
-                "mode":     "lines",
-                "marker":   { "color": "#0000FF" }
+                "x":            list(range(len(avg))),
+                "y":            avg,
+                "name":         "average (fair)",
+                "mode":         "lines",
+                "marker":       { "color": "#0000FF" }
             }
-        )
+        ),
+        secondary_y = False
     )
 
     fig.add_trace(
         go.Scattergl(
             {
-                "x":        list(range(len(total))),
-                "y":        total,
-                "name":     "total (fair)",
-                "mode":     "lines",
-                "marker":   { "color": "#FF00FF" }
+                "x":            list(range(len(total))),
+                "y":            total,
+                "name":         "total (fair)",
+                "mode":         "lines",
+                "marker":       { "color": "#FF00FF" }
             }
-        )
+        ),
+        secondary_y = True
     )
 
     fig.show()
-
 
     print(f"average (fair): ${avg[-1]:0.2f}")
     print(f"total (fair):   ${total[-1]:0.2f}")
@@ -54,25 +55,27 @@ if __name__ == "__main__":
     fig.add_trace(
         go.Scattergl(
             {
-                "x":        list(range(len(avg))),
-                "y":        avg,
-                "name":     "average",
-                "mode":     "lines",
-                "marker":   { "color": "#0000FF" }
+                "x":            list(range(len(avg))),
+                "y":            avg,
+                "name":         "average",
+                "mode":         "lines",
+                "marker":       { "color": "#0000FF" }
             }
-        )
+        ),
+        secondary_y = False
     )
 
     fig.add_trace(
         go.Scattergl(
             {
-                "x":        list(range(len(total))),
-                "y":        total,
-                "name":     "total",
-                "mode":     "lines",
-                "marker":   { "color": "#FF00FF" }
+                "x":            list(range(len(total))),
+                "y":            total,
+                "name":         "total",
+                "mode":         "lines",
+                "marker":       { "color": "#FF00FF" }
             }
-        )
+        ),
+        secondary_y = True
     )
 
     fig.show()
