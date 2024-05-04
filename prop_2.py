@@ -59,7 +59,8 @@ def sim_runs(
 
             if equity > high_watermark:
 
-                trailing_drawdown = min(equity + DRAWDOWN_PERCENT, 0)
+                high_watermark      = equity
+                trailing_drawdown   = min(high_watermark + DRAWDOWN_PERCENT, 0)
             
             elif equity <= trailing_drawdown:
 
