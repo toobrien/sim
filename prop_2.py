@@ -158,9 +158,9 @@ if __name__ == "__main__":
             print(f"sharpe:             {sharpe:0.1f}")
             print(f"failure rate:       {failure_rate * 100:0.2f}%")
             print(f"eval pass rate:     {pass_rate * 100:0.2f}%")
-            print(f"average return:     {average_return * 100:0.2f}% (${ES * e**average_return - ES:0.2f})")
-            print(f"average fees:       {average_fees * 100:0.2f}% (${ES * e**average_fees - ES:0.2f})")
-            print(f"return after fees:  {excess_expected_return * 100:0.2f}% (${ES * e**excess_expected_return - ES:0.2f})")
+            print(f"average return:     {average_return * 100:0.2f}%\t(${ES * e**average_return - ES:0.2f})")
+            print(f"average fees:       {average_fees * 100:0.2f}%\t(${ES * e**average_fees - ES:0.2f})")
+            print(f"return after fees:  {excess_expected_return * 100:0.2f}%\t(${ES * e**excess_expected_return - ES:0.2f})")
 
             print("\n\n")
 
