@@ -1,3 +1,4 @@
+from    bisect                  import  bisect_left
 from    random                  import  choices
 from    numpy                   import  cumsum, mean, std
 import  plotly.figure_factory   as      ff
@@ -95,14 +96,14 @@ def example_b():
     fair_sides      = [ -3, -2, -1, 1, 2, 3 ]
     edge_sides      = [ -3, -2, -1, 1.25, 2, 3 ]
     probs           = [ 0.05, 0.20, 0.25, 0.25, 0.20, 0.05 ]
-    fair_sample     = [ 
+    fair_sample     = sorted([ 
                         sum(choices(population = fair_sides, weights = probs, k = rolls))
                         for i in range(traders)
-                    ]
-    edge_sample     = [
+                    ])
+    edge_sample     = sorted([
                         sum(choices(population = edge_sides, weights = probs, k = rolls))
                         for i in range(traders)
-                    ]
+                    ])
     
     fig = ff.create_distplot(
         [ fair_sample, edge_sample ],
@@ -113,11 +114,21 @@ def example_b():
     )
 
     fig.show()
+
+    i               = bisect_left(fair_sample, edge_sample[0])
+    lucky           = i / len(fair_sample) * 100
     
     print(f"average (fair): {mean(fair_sample):0.2f}")
     print(f"stdev (fair):   {std(fair_sample):0.2f}")
+    print(f"min (fair):     {fair_sample[0]:0.2f}")
+    print(f"max (fair):     {fair_sample[-1]:0.2f}")
+    print(f"lucky:          {lucky:0.1f}\n")
+
     print(f"average (edge): {mean(edge_sample):0.2f}")
     print(f"stdev (edge):   {std(edge_sample):0.2f}")
+    print(f"min (edge):     {edge_sample[0]:0.2f}")
+    print(f"max (edge):     {edge_sample[-1]:0.2f}")
+
     print(f"{time() - t0:0.1f}s")
 
 
