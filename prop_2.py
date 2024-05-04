@@ -51,7 +51,7 @@ if __name__ == "__main__":
     rewards = [ 1, 2, 3, 4, 5 ] 
     header  = "         " + "".join([ f"{risk:<10.2f}" for risk in risks ])
 
-    print("\n", "sharpe\n", header)
+    print("\n\n", "-----", "\n\n", "sharpe", "\n\n", header)
 
     for reward in rewards:
 
