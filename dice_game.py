@@ -1,11 +1,12 @@
 from    random                  import  choices
-from    numpy                   import  cumsum
+from    numpy                   import  cumsum, mean
+import  plotly.figure_factory   as      ff
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    time                    import  time
 
 
-if __name__ == "__main__":
+def example_a():
 
     t0      = time()
     rolls   = 100_000
@@ -83,4 +84,44 @@ if __name__ == "__main__":
 
     print(f"average (edge): ${avg[-1]:0.2f}")
     print(f"total (edge):   ${total[-1]:0.2f}")
-    print(f"{time() - t0:0.1}s")
+    print(f"{time() - t0:0.1f}s")
+
+
+def example_b():
+
+    t0 = time()
+    rolls           = 10_000
+    traders         = 1_000
+    fair_sides      = [ -3, -2, -1, 1, 2, 3 ]
+    edge_sides      = [ -3, -2, -1, 1.25, 2, 3 ]
+    probs           = [ 0.05, 0.20, 0.25, 0.25, 0.20, 0.05 ]
+    fair_sample     = [ 
+                        sum(choices(population = fair_sides, weights = probs, k = rolls))
+                        for i in range(traders)
+                    ]
+    edge_sample     = [
+                        sum(choices(population = edge_sides, weights = probs, k = rolls))
+                        for i in range(traders)
+                    ]
+    
+    fig = ff.create_distplot(
+        [ fair_sample, edge_sample ],
+        [ "fair die", "edge die" ],
+        curve_type  = "normal",
+        show_hist   = True,
+        show_rug    = False
+    )
+
+    fig.show()
+    
+    print(f"average (fair): {mean(fair_sample)}:0.2f")
+    print(f"average (edge): {mean(edge_sample)}:0.2f")
+    print(f"{time() - t0:0.1f}s")
+
+
+
+if __name__ == "__main__":
+
+    #example_a()
+
+    example_b()
