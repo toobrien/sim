@@ -90,12 +90,13 @@ def sim_runs(
         returns.append(total_return)
         fees.append(total_fees)
 
-    failure_rate        = failed / runs
-    passed_eval_rate    = passed / runs
-    average_return      = mean(returns)
-    average_fees        = mean(fees)
+    failure_rate            = failed / runs
+    passed_eval_rate        = passed / runs
+    average_return          = mean(returns)
+    average_fees            = log((ES - mean(fees)) / ES)
+    excess_expected_return  = average_return + average_fees
 
-    return failure_rate, passed_eval_rate, average_return, average_fees
+    return failure_rate, passed_eval_rate, average_return, average_fees, excess_expected_return
 
 
 if __name__ == "__main__":
@@ -139,7 +140,7 @@ if __name__ == "__main__":
 
     # DISPLAY PASS RATES
         
-    print("\n\n", "-----", "\n\n", "pass rate (1 micro)", "\n\n", risk_header)
+    print("\n\n", "-----", "\n\n", "performance results (1 micro)", "\n\n")
         
     for reward in rewards:
 
@@ -149,9 +150,21 @@ if __name__ == "__main__":
 
         for risk in risks:
 
-            sigma = risk * ES_SIGMA_DAILY
+            sigma   = risk * ES_SIGMA_DAILY
+            sharpe  = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
 
-            pass_rate = sim_runs(RUNS, RUN_YEARS * DPY, mu, sigma, LEVERAGE_MICRO)
+            failure_rate, pass_rate, average_return, average_fees, excess_expected_return = sim_runs(RUNS, RUN_YEARS * DPY, mu, sigma, LEVERAGE_MICRO)
+
+            print(f"reward:             {reward:0.1f}x")
+            print(f"risk:               {risk:0.2f}x")
+            print(f"sharpe:             {sharpe:0.1f}")
+            print(f"failure rate:       {failure_rate * 100:0.2f}%")
+            print(f"eval pass rate:     {pass_rate * 100:0.2f}%")
+            print(f"average return:     {average_return * 100:0.2f}% (${ES * e**average_return - ES:0.2f})")
+            print(f"average fees:       {average_fees * 100:0.2f}% (${ES * e**average_fees - ES:0.2f})")
+            print(f"return after fees:  {excess_expected_return * 100:0.2f}% (${ES * e**excess_expected_return - ES:0.2f})")
+
+            print("\n\n")
 
             pass
 
