@@ -132,7 +132,7 @@ if __name__ == "__main__":
     leverage    = float(argv[3])
     mu          = reward * ES_MU_DAILY
     sigma       = risk * ES_SIGMA_DAILY
-    sharpe      = (mu - T_BILL_DAILY) / sigma
+    sharpe      = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
 
     (
         failure_rate, 
