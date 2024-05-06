@@ -5,6 +5,10 @@ from    sys                     import  argv
 from    typing                  import  List, Tuple
 
 
+#                  risk reward  leverage
+# python prop_2.py 1.0  1.0     1.0
+
+
 DPY                         = 256
 DPM                         = 21
 T_BILL                      = 0.05
