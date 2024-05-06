@@ -13,16 +13,16 @@ DPY                         = 256
 DPM                         = 21
 T_BILL                      = 0.05
 T_BILL_DAILY                = log(1 + T_BILL) / DPY
-ES                          = 5000 * 50
+ES                          = 5_000 * 50
 ES_MU                       = 0.0721
 ES_SIGMA                    = 0.1961
 ES_MU_DAILY                 = ES_MU / DPY
 ES_SIGMA_DAILY              = ES_SIGMA * sqrt(1 / DPY)
 ES_SHARPE                   = (ES_MU_DAILY - T_BILL_DAILY) / ES_SIGMA_DAILY * sqrt(DPY)
 ACCOUNT_SIZE                = 50_000
-DRAWDOWN                    = 2000
+DRAWDOWN                    = 2_000
 DRAWDOWN_PERCENT            = log((ES - DRAWDOWN) / ES)
-PROFIT_TARGET               = 3000
+PROFIT_TARGET               = 3_000
 PROFIT_TARGET_PERCENT       = log((ES + PROFIT_TARGET) / ES)
 EVAL_MONTHLY_FEE            = 50
 ACTIVATION_FEE              = 100
@@ -32,7 +32,7 @@ COMMISSIONS_ALL_IN          = 4.0
 SPREAD                      = 12.5
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
 TRANSACTION_COSTS_PERCENT   = log((ES + TRANSACTION_COSTS) / ES)
-RUNS                        = 1000
+RUNS                        = 10_000
 RUN_YEARS                   = 1
 
 #               size    eval ($/mo)     pa ($/mo)   activation fee  trailing dd     eval target
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     print(f"reward:                     {reward:0.2f}x")
     print(f"risk:                       {risk:0.2f}x")
     print(f"sharpe:                     {sharpe:0.2f}")
-    print(f"failure rate:               {failure_rate * 100:0.2f}%")
+    print(f"survival rate:              {(1 - failure_rate) * 100:0.2f}%")
     print(f"eval pass rate:             {pass_rate * 100:0.2f}%")
     print(f"average return:             {average_return * 100:0.2f}%\t${ES * e**average_return - ES:0.2f}")
     print(f"average prop fees:          {average_prop_fees * 100:0.2f}%\t${ES * e**average_prop_fees - ES:0.2f}")
