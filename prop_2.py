@@ -1,17 +1,19 @@
 from    math                    import  ceil, e, log, sqrt
 from    numpy                   import  cumsum, mean
 from    numpy.random            import  normal
+from    sys                     import  argv
 from    typing                  import  List, Tuple
+
 
 DPY                         = 256
 DPM                         = 21
 T_BILL                      = 0.05
 T_BILL_DAILY                = log(1 + T_BILL) / DPY
 ES                          = 5000 * 50
-ES_MU                       = 0.10
-ES_SIGMA                    = 0.15
-ES_MU_DAILY                 = log(1 + ES_MU) / 256
-ES_SIGMA_DAILY              = log(1 + ES_SIGMA) * sqrt(1 / DPY)
+ES_MU                       = 0.0721
+ES_SIGMA                    = 0.1961
+ES_MU_DAILY                 = ES_MU / DPY
+ES_SIGMA_DAILY              = ES_SIGMA * sqrt(1 / DPY)
 ES_SHARPE                   = (ES_MU_DAILY - T_BILL_DAILY) / ES_SIGMA_DAILY * sqrt(DPY)
 ACCOUNT_SIZE                = 50_000
 DRAWDOWN                    = 2000
@@ -26,8 +28,6 @@ COMMISSIONS_ALL_IN          = 4.0
 SPREAD                      = 12.5
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
 TRANSACTION_COSTS_PERCENT   = log((ES + TRANSACTION_COSTS) / ES)
-LEVERAGE_MINI               = 1.0
-LEVERAGE_MICRO              = 0.1
 RUNS                        = 1000
 RUN_YEARS                   = 1
 
@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     print(f"t_bill:                     {T_BILL:0.4f}")
     print(f"t_bill_daily:               {T_BILL_DAILY:0.4f}")
+    print(f"es_price:                   {ES:0.2f}")
     print(f"es_mu:                      {ES_MU:0.4f}")
     print(f"es_mu_daily:                {ES_MU_DAILY:0.4f}")
     print(f"es_sigma:                   {ES_SIGMA:0.4f}")
@@ -123,60 +124,35 @@ if __name__ == "__main__":
     print(f"profit_target_percent:      {PROFIT_TARGET_PERCENT:0.4f}")
     print(f"drawdown:                   {DRAWDOWN}")
     print(f"drawdown_percent:           {DRAWDOWN_PERCENT:0.4f}")
-    print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.4f}")
+    print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.4f}\n")
+    print("-----\n")
+    
+    reward      = float(argv[1])
+    risk        = float(argv[2])
+    leverage    = float(argv[3])
+    mu          = reward * ES_MU_DAILY
+    sigma       = risk * ES_SIGMA_DAILY
+    sharpe      = (mu - T_BILL_DAILY) / sigma
 
-    risks           = [ 1, 1/2, 1/3, 1/4, 1/5 ]
-    rewards         = [ 1, 2, 3, 4, 5 ] 
-    risk_header     = "         " + "".join([ f"{risk:<10.2f}" for risk in risks ])
+    (
+        failure_rate, 
+        pass_rate, 
+        average_return, 
+        average_prop_fees, 
+        average_transaction_costs, 
+        excess_expected_return 
+    ) = sim_runs(RUNS, RUN_YEARS * DPY, mu, sigma, leverage)
 
-    # DISPLAY SHARPE RATIOS
+    print(f"reward:                     {reward:0.2f}x")
+    print(f"risk:                       {risk:0.2f}x")
+    print(f"sharpe:                     {sharpe:0.1f}")
+    print(f"failure rate:               {failure_rate * 100:0.2f}%")
+    print(f"eval pass rate:             {pass_rate * 100:0.2f}%")
+    print(f"average return:             {average_return * 100:0.2f}%\t${ES * e**average_return - ES:0.2f}")
+    print(f"average prop fees:          {average_prop_fees * 100:0.2f}%\t${ES * e**average_prop_fees - ES:0.2f}")
+    print(f"average transaction costs:  {average_transaction_costs * 100:0.2f}%\t${ES * e**average_transaction_costs - ES:0.2f}")
+    print(f"return after fees:          {excess_expected_return * 100:0.2f}%\t${ES * e**excess_expected_return - ES:0.2f}")
 
-    print("\n\n", "-----", "\n\n", "sharpe", "\n\n", risk_header)
-
-    for reward in rewards:
-
-        mu = reward * ES_MU_DAILY
-
-        line = f"{reward:<10}"
-
-        for risk in risks:
-
-            sigma = risk * ES_SIGMA_DAILY
-
-            sharpe = (mu - T_BILL_DAILY) / sigma
-            sharpe = sharpe * sqrt(DPY)
-
-            line += f"{sharpe:<10.1f}"
-
-        print(line)
-
-    # DISPLAY PASS RATES
-        
-    print("\n\n", "-----", "\n\n", "performance results (1 mini)", "\n\n")
-        
-    for reward in rewards:
-
-        mu = reward * ES_MU_DAILY
-
-        for risk in risks:
-
-            sigma   = risk * ES_SIGMA_DAILY
-            sharpe  = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
-
-            failure_rate, pass_rate, average_return, average_prop_fees, average_transaction_costs, excess_expected_return = sim_runs(RUNS, RUN_YEARS * DPY, mu, sigma, LEVERAGE_MINI)
-
-            print(f"reward:                     {reward:0.1f}x")
-            print(f"risk:                       {risk:0.2f}x")
-            print(f"sharpe:                     {sharpe:0.1f}")
-            print(f"failure rate:               {failure_rate * 100:0.2f}%")
-            print(f"eval pass rate:             {pass_rate * 100:0.2f}%")
-            print(f"average return:             {average_return * 100:0.2f}%\t(${ES * e**average_return - ES:0.2f})")
-            print(f"average prop fees:          {average_prop_fees * 100:0.2f}%\t(${ES * e**average_prop_fees - ES:0.2f})")
-            print(f"average transaction costs:  {average_transaction_costs * 100:0.2f}%\t(${ES * e**average_transaction_costs - ES:0.2f})")
-            print(f"return after fees:          {excess_expected_return * 100:0.2f}%\t(${ES * e**excess_expected_return - ES:0.2f})")
-
-            print("\n\n")
-
-            pass
+    print("\n\n")
 
     pass

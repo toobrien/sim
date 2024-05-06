@@ -132,9 +132,7 @@ def example_b():
     print(f"{time() - t0:0.1f}s")
 
 
-
 if __name__ == "__main__":
 
     #example_a()
-
     example_b()
