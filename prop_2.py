@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     print(f"reward:                     {reward:0.2f}x")
     print(f"risk:                       {risk:0.2f}x")
-    print(f"sharpe:                     {sharpe:0.1f}")
+    print(f"sharpe:                     {sharpe:0.2f}")
     print(f"failure rate:               {failure_rate * 100:0.2f}%")
     print(f"eval pass rate:             {pass_rate * 100:0.2f}%")
     print(f"average return:             {average_return * 100:0.2f}%\t${ES * e**average_return - ES:0.2f}")
