@@ -21,10 +21,10 @@ ES_SIGMA_DAILY              = ES_SIGMA * sqrt(1 / DPY)
 ES_SHARPE                   = (ES_MU_DAILY - T_BILL_DAILY) / ES_SIGMA_DAILY * sqrt(DPY)
 ACCOUNT_SIZE                = 50_000
 DRAWDOWN                    = 2_000
+MINIMUM_TRADING_DAYS        = 10
 DRAWDOWN_PERCENT            = log((ES - DRAWDOWN) / ES)
 PROFIT_TARGET               = 3_000
 PROFIT_TARGET_PERCENT       = log((ES + PROFIT_TARGET) / ES)
-EVAL_MONTHLY_FEE            = 50
 ACTIVATION_FEE              = 100
 PA_MONTHLY_FEE              = 135
 TRADES_PER_DAY              = 1
@@ -58,11 +58,12 @@ def sim_runs(
     for i in range(runs):
 
         total_return            = 0
-        total_prop_fees         = 0
+        total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
         trailing_drawdown       = DRAWDOWN_PERCENT
         high_watermark          = 0
         run                     = list(leverage * cumsum(normal(loc = mu, scale = sigma, size = days)))
+        blown                   = False
 
         for j in range(len(run)):
 
@@ -75,8 +76,9 @@ def sim_runs(
             
             elif equity <= trailing_drawdown:
 
-                failed  += 1
-                run     =  run[0:j]
+                blown   =   True
+                failed  +=  1
+                run     =   run[0:j]
 
                 break
 
@@ -90,15 +92,14 @@ def sim_runs(
 
                 passed              +=  1
                 target_met_index    =   j
-                total_prop_fees     += ACTIVATION_FEE
 
                 break
 
-        months_in_eval          = ceil(target_met_index / DPM)
-        months_in_pa            = ceil((len(run) - target_met_index) / DPM)
-        total_prop_fees         = total_prop_fees + (months_in_eval * EVAL_MONTHLY_FEE) + (months_in_pa * PA_MONTHLY_FEE)
+        
+        months                  = ceil(len(run) / DPM)
+        total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
         total_transaction_costs = (TRANSACTION_COSTS * TRADES_PER_DAY * len(run))
-        total_return            = run[-1] if len(run) >= 1 else equity
+        total_return            = equity if not blown and equity > PROFIT_TARGET_PERCENT else 0
         
         returns.append(total_return)
         prop_fees.append(total_prop_fees)
@@ -129,6 +130,7 @@ if __name__ == "__main__":
     print(f"drawdown:                   {DRAWDOWN}")
     print(f"drawdown_percent:           {DRAWDOWN_PERCENT:0.4f}")
     print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.4f}\n")
+    print(f"runs:                       {RUNS}\n")
     print("-----\n")
     
     reward      = float(argv[1])
