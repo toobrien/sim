@@ -19,14 +19,15 @@ show_chart      = int(argv[6])
 
 DPY                         = 256
 DPM                         = 21
-T_BILL                      = 0.05
-T_BILL_DAILY                = log(1 + T_BILL) / DPY
+T_BILL                      = log(1 + 0.05)
+T_BILL_DAILY                = T_BILL / DPY
 ES                          = 5_000 * 50
 ES_MU                       = 0.0721
 ES_SIGMA                    = 0.1961
 ES_MU_DAILY                 = ES_MU / DPY
 ES_SIGMA_DAILY              = ES_SIGMA * sqrt(1 / DPY)
 ES_SHARPE                   = (ES_MU_DAILY - T_BILL_DAILY) / ES_SIGMA_DAILY * sqrt(DPY)
+ES_SHARPE_0                 = ES_MU_DAILY / ES_SIGMA_DAILY * sqrt(DPY)
 ACCOUNT_SIZE                = 50_000
 DRAWDOWN                    = 2_000
 MINIMUM_TRADING_DAYS        = 10
@@ -135,18 +136,19 @@ if __name__ == "__main__":
     print(f"t_bill:                     {T_BILL:0.4f}")
     print(f"t_bill_daily:               {T_BILL_DAILY:0.4f}")
     print(f"es_price:                   {ES / 50:0.2f}")
-    print(f"es_mu:                      {ES_MU:0.4f}")
-    print(f"es_mu_daily:                {ES_MU_DAILY:0.4f}")
-    print(f"es_sigma:                   {ES_SIGMA:0.4f}")
-    print(f"es_sigma_daily:             {ES_SIGMA_DAILY:0.4f}")
-    print(f"es_sharpe:                  {ES_SHARPE:0.4f}")
-    print(f"profit_target:              {PROFIT_TARGET}")
+    print(f"es_average_annual:          {ES_MU:0.4f}")
+    print(f"es_avg_daily:               {ES_MU_DAILY:0.4f}")
+    print(f"es_stdev_annual:            {ES_SIGMA:0.4f}")
+    print(f"es_stdev_daily:             {ES_SIGMA_DAILY:0.4f}")
+    print(f"es_sharpe (rfr = {T_BILL*100:0.2f}):     {ES_SHARPE:0.2f}")
+    print(f"es_sharpe (rfr = 0):        {ES_SHARPE_0:0.2f}")
+    print(f"profit_target:              ${PROFIT_TARGET}")
     print(f"profit_target_percent:      {PROFIT_TARGET_PERCENT:0.4f}")
-    print(f"drawdown:                   {DRAWDOWN}")
+    print(f"drawdown:                   ${DRAWDOWN}")
     print(f"drawdown_percent:           {DRAWDOWN_PERCENT:0.4f}")
     print(f"commissions (rt):           {COMMISSIONS_ALL_IN:0.2f}")
     print(f"spread:                     {SPREAD:0.2f}")
-    print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.4f}")
+    print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.5f}")
     print("\n-----\n")
 
     mu          = reward * ES_MU_DAILY
@@ -154,8 +156,8 @@ if __name__ == "__main__":
     sharpe      = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
     sharpe_0    = mu / sigma * sqrt(DPY)
 
-    print(f"reward:                     {reward:0.2f}x")
-    print(f"risk:                       {risk:0.2f}x")
+    print(f"reward:                     {reward:0.2f}x\t{mu:0.4f}")
+    print(f"risk:                       {risk:0.2f}x\t{sigma:0.4f}")
     print(f"leverage:                   {leverage:0.2f}x")
     print(f"runs:                       {runs}")
     print(f"trades_per_day:             {trades_per_day}\n")
@@ -183,7 +185,7 @@ if __name__ == "__main__":
 
     return_after_costs = (average_return - average_prop_fees - average_transaction_costs)
 
-    print(f"return after all costs:     {return_after_costs * 100:0.2f}%\t${ES * e**return_after_costs - ES:0.2f}")
+    print(f"expected return after costs: {return_after_costs * 100:0.2f}%\t${ES * e**return_after_costs - ES:0.2f}")
 
     print("\n\n")
 
