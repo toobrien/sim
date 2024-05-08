@@ -10,6 +10,13 @@ from    typing                  import  List, Tuple
 # python prop_2.py 1.0  1.0     1.0         1000    1               1
 
 
+reward          = float(argv[1])
+risk            = float(argv[2])
+leverage        = float(argv[3])
+runs            = int(argv[4])
+trades_per_day  = int(argv[5])
+show_chart      = int(argv[6])
+
 DPY                         = 256
 DPM                         = 21
 T_BILL                      = 0.05
@@ -28,8 +35,8 @@ PROFIT_TARGET               = 3_000
 PROFIT_TARGET_PERCENT       = log((ES + PROFIT_TARGET) / ES)
 ACTIVATION_FEE              = 100
 PA_MONTHLY_FEE              = 135
-COMMISSIONS_ALL_IN          = 4.0
-SPREAD                      = 12.5
+COMMISSIONS_ALL_IN          = 4.0 if leverage >= 1.0 else 1.2
+SPREAD                      = 12.5 if leverage >= 1.0 else 1.25
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
 TRANSACTION_COSTS_PERCENT   = log((ES + TRANSACTION_COSTS) / ES)
 RUN_YEARS                   = 1
@@ -82,7 +89,7 @@ def sim_runs(
 
                 break
 
-            elif equity >= PROFIT_TARGET_PERCENT:
+            elif equity >= PROFIT_TARGET_PERCENT and j > MINIMUM_TRADING_DAYS:
 
                 pt_hit = True
 
@@ -125,13 +132,6 @@ def sim_runs(
 
 if __name__ == "__main__":
 
-    reward          = float(argv[1])
-    risk            = float(argv[2])
-    leverage        = float(argv[3])
-    runs            = int(argv[4])
-    trades_per_day  = int(argv[5])
-    show_chart      = int(argv[6])
-
     print(f"t_bill:                     {T_BILL:0.4f}")
     print(f"t_bill_daily:               {T_BILL_DAILY:0.4f}")
     print(f"es_price:                   {ES / 50:0.2f}")
@@ -144,14 +144,25 @@ if __name__ == "__main__":
     print(f"profit_target_percent:      {PROFIT_TARGET_PERCENT:0.4f}")
     print(f"drawdown:                   {DRAWDOWN}")
     print(f"drawdown_percent:           {DRAWDOWN_PERCENT:0.4f}")
+    print(f"commissions (rt):           {COMMISSIONS_ALL_IN:0.2f}")
+    print(f"spread:                     {SPREAD:0.2f}")
     print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.4f}")
-    print(f"runs:                       {runs}")
-    print(f"trades_per_day:             {trades_per_day}\n")
-    print("-----\n")
+    print("\n-----\n")
 
     mu          = reward * ES_MU_DAILY
     sigma       = risk * ES_SIGMA_DAILY
     sharpe      = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
+    sharpe_0    = mu / sigma * sqrt(DPY)
+
+    print(f"reward:                     {reward:0.2f}x")
+    print(f"risk:                       {risk:0.2f}x")
+    print(f"leverage:                   {leverage:0.2f}x")
+    print(f"runs:                       {runs}")
+    print(f"trades_per_day:             {trades_per_day}\n")
+    print(f"sharpe (rfr = {T_BILL * 100:0.2f}%):       {sharpe:0.2f}")
+    print(f"sharpe (rfr = 0):           {sharpe_0:0.2f}")
+
+    print("\n-----\n")
 
     (
         failure_rate, 
@@ -163,9 +174,6 @@ if __name__ == "__main__":
         fig
     ) = sim_runs(runs, RUN_YEARS * DPY, mu, sigma, leverage, trades_per_day, show_chart)
 
-    print(f"reward:                     {reward:0.2f}x")
-    print(f"risk:                       {risk:0.2f}x")
-    print(f"sharpe:                     {sharpe:0.2f}")
     print(f"survival rate:              {(1 - failure_rate) * 100:0.2f}%")
     print(f"eval pass rate:             {pass_rate * 100:0.2f}%")
     print(f"average trading days:       {int(ceil(average_trading_days))}")
@@ -179,6 +187,8 @@ if __name__ == "__main__":
 
     print("\n\n")
 
-    fig.show()
+    if show_chart:
+    
+        fig.show()
 
     pass
