@@ -133,22 +133,22 @@ def sim_runs(
 
 if __name__ == "__main__":
 
-    print(f"t_bill:                     {T_BILL:0.4f}")
-    print(f"t_bill_daily:               {T_BILL_DAILY:0.4f}")
-    print(f"es_price:                   {ES / 50:0.2f}")
-    print(f"es_average_annual:          {ES_MU:0.4f}")
-    print(f"es_avg_daily:               {ES_MU_DAILY:0.4f}")
-    print(f"es_stdev_annual:            {ES_SIGMA:0.4f}")
-    print(f"es_stdev_daily:             {ES_SIGMA_DAILY:0.4f}")
-    print(f"es_sharpe (rfr = {T_BILL*100:0.2f}):     {ES_SHARPE:0.2f}")
-    print(f"es_sharpe (rfr = 0):        {ES_SHARPE_0:0.2f}")
-    print(f"profit_target:              ${PROFIT_TARGET}")
-    print(f"profit_target_percent:      {PROFIT_TARGET_PERCENT:0.4f}")
-    print(f"drawdown:                   ${DRAWDOWN}")
-    print(f"drawdown_percent:           {DRAWDOWN_PERCENT:0.4f}")
-    print(f"commissions (rt):           {COMMISSIONS_ALL_IN:0.2f}")
-    print(f"spread:                     {SPREAD:0.2f}")
-    print(f"transaction_costs_percent:  {TRANSACTION_COSTS_PERCENT:0.5f}")
+    print(f"t_bill:                         {T_BILL:0.4f}")
+    print(f"t_bill_daily:                   {T_BILL_DAILY:0.4f}")
+    print(f"es_price:                       {ES / 50:0.2f}")
+    print(f"es_average_annual:              {ES_MU:0.4f}")
+    print(f"es_avg_daily:                   {ES_MU_DAILY:0.4f}")
+    print(f"es_stdev_annual:                {ES_SIGMA:0.4f}")
+    print(f"es_stdev_daily:                 {ES_SIGMA_DAILY:0.4f}")
+    print(f"es_sharpe (rfr = {T_BILL*100:0.2f}):         {ES_SHARPE:0.2f}")
+    print(f"es_sharpe (rfr = 0):            {ES_SHARPE_0:0.2f}")
+    print(f"profit_target:                  ${PROFIT_TARGET}")
+    print(f"profit_target_percent:          {PROFIT_TARGET_PERCENT:0.4f}")
+    print(f"drawdown:                       ${DRAWDOWN}")
+    print(f"drawdown_percent:               {DRAWDOWN_PERCENT:0.4f}")
+    print(f"commissions (rt):               {COMMISSIONS_ALL_IN:0.2f}")
+    print(f"spread:                         ${SPREAD:0.2f}")
+    print(f"transaction_costs_percent:      ${TRANSACTION_COSTS_PERCENT:0.5f}")
     print("\n-----\n")
 
     mu          = reward * ES_MU_DAILY
@@ -156,13 +156,13 @@ if __name__ == "__main__":
     sharpe      = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
     sharpe_0    = mu / sigma * sqrt(DPY)
 
-    print(f"reward:                     {reward:0.2f}x\t{mu:0.4f}")
-    print(f"risk:                       {risk:0.2f}x\t{sigma:0.4f}")
-    print(f"leverage:                   {leverage:0.2f}x")
-    print(f"runs:                       {runs}")
-    print(f"trades_per_day:             {trades_per_day}\n")
-    print(f"sharpe (rfr = {T_BILL * 100:0.2f}%):       {sharpe:0.2f}")
-    print(f"sharpe (rfr = 0):           {sharpe_0:0.2f}")
+    print(f"reward:                         {reward:0.2f}x\t{mu * 100:0.2f}%\t${ES * (e**mu - 1) * leverage:0.2f}")
+    print(f"risk:                           {risk:0.2f}x\t{sigma * 100:0.2f}%\t${ES * (e**sigma - 1) * leverage:0.2f}")
+    print(f"leverage:                       {leverage:0.2f}x")
+    print(f"runs:                           {runs}")
+    print(f"trades_per_day:                 {trades_per_day}\n")
+    print(f"sharpe (rfr = {T_BILL * 100:0.2f}%):           {sharpe:0.2f}")
+    print(f"sharpe (rfr = 0):               {sharpe_0:0.2f}")
 
     print("\n-----\n")
 
@@ -176,16 +176,16 @@ if __name__ == "__main__":
         fig
     ) = sim_runs(runs, RUN_YEARS * DPY, mu, sigma, leverage, trades_per_day, show_chart)
 
-    print(f"survival rate:              {(1 - failure_rate) * 100:0.2f}%")
-    print(f"eval pass rate:             {pass_rate * 100:0.2f}%")
-    print(f"average trading days:       {int(ceil(average_trading_days))}")
-    print(f"average return:             {average_return * 100:0.2f}%\t${ES * e**average_return - ES:0.2f}")
-    print(f"average prop fees:          {average_prop_fees * 100:0.2f}%\t${ES * e**average_prop_fees - ES:0.2f}")
-    print(f"average transaction costs:  {average_transaction_costs * 100:0.2f}%\t${ES * e**average_transaction_costs - ES:0.2f}")
+    print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
+    print(f"eval pass rate:                 {pass_rate * 100:0.2f}%")
+    print(f"average trading days:           {int(ceil(average_trading_days))}")
+    print(f"average return:                 {average_return * 100:0.2f}%\t${ES * e**average_return - ES:0.2f}")
+    print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * e**average_prop_fees - ES:0.2f}")
+    print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * e**average_transaction_costs - ES:0.2f}")
 
     return_after_costs = (average_return - average_prop_fees - average_transaction_costs)
 
-    print(f"expected return after costs: {return_after_costs * 100:0.2f}%\t${ES * e**return_after_costs - ES:0.2f}")
+    print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * e**return_after_costs - ES:0.2f}")
 
     print("\n\n")
 
