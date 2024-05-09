@@ -6,12 +6,17 @@ from    sys                     import  argv
 from    typing                  import  List, Tuple
 
 
-#                  risk reward  leverage    runs    trades_per_day  show_chart
-# python prop_2.py 1.0  1.0     1.0         1000    1               1
+#                  reward risk   leverage runs trades_per_day show_chart
+# python prop_2.py 1.0x   1.0x   1.0      1000 1              1
+# python prop_2.py \$100  \$200  1.0      1000 1              1
+# python prop_2.py 2p     5p     1.0      1000 1              1
+# python prop_2.py 0.0003 0.0125 1.0      1000 1              1
+
+# risk/reward can be ES multiplier, $, ES points, or basis points
 
 
-reward          = float(argv[1])
-risk            = float(argv[2])
+reward          = argv[1]
+risk            = argv[2]
 leverage        = float(argv[3])
 runs            = int(argv[4])
 trades_per_day  = int(argv[5])
@@ -31,15 +36,15 @@ ES_SHARPE_0                 = ES_MU_DAILY / ES_SIGMA_DAILY * sqrt(DPY)
 ACCOUNT_SIZE                = 50_000
 DRAWDOWN                    = 2_000
 MINIMUM_TRADING_DAYS        = 10
-DRAWDOWN_PERCENT            = log((ES - DRAWDOWN) / ES)
+DRAWDOWN_PERCENT            = log(1 - DRAWDOWN / ES)
 PROFIT_TARGET               = 3_000
-PROFIT_TARGET_PERCENT       = log((ES + PROFIT_TARGET) / ES)
+PROFIT_TARGET_PERCENT       = log(1 + PROFIT_TARGET / ES)
 ACTIVATION_FEE              = 100
 PA_MONTHLY_FEE              = 135
 COMMISSIONS_ALL_IN          = 4.0 if leverage >= 1.0 else 1.2
 SPREAD                      = 12.5 if leverage >= 1.0 else 1.25
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
-TRANSACTION_COSTS_PERCENT   = log((ES + TRANSACTION_COSTS) / ES)
+TRANSACTION_COSTS_PERCENT   = log(1 + TRANSACTION_COSTS / ES)
 RUN_YEARS                   = 1
 
 #               size    eval ($/mo)     pa ($/mo)   activation fee  trailing dd     eval target
@@ -61,6 +66,7 @@ def sim_runs(
     fig                 = go.Figure()
     failed              = 0
     passed              = 0
+    withdrawal_eligible = 0
     returns             = []
     prop_fees           = []
     transaction_costs   = []
@@ -98,6 +104,10 @@ def sim_runs(
 
             passed += 1
 
+        if equity >= PROFIT_TARGET_PERCENT and j > MINIMUM_TRADING_DAYS:
+
+            withdrawal_eligible += 1
+
         if show_chart:
 
             fig.add_trace(
@@ -117,18 +127,46 @@ def sim_runs(
         total_return            = equity if not blown and equity > PROFIT_TARGET_PERCENT else 0
         
         run_days.append(len(run))
-        returns.append(total_return + log((ES + total_transaction_costs) / ES))
+        returns.append(total_return + log(1 + total_transaction_costs / ES))
         prop_fees.append(total_prop_fees)
         transaction_costs.append(total_transaction_costs)
 
     failure_rate                    = failed / runs
     passed_eval_rate                = passed / runs
+    withdrawal_rate                 = withdrawal_eligible / runs
     average_return                  = mean(returns)
     average_prop_fees               = log(1 + mean(prop_fees) / ES)
     average_transaction_costs       = log(1 + mean(transaction_costs) / ES)
     average_trading_days            = mean(run_days)
 
-    return failure_rate, passed_eval_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, fig
+    return failure_rate, passed_eval_rate, withdrawal_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, fig
+
+
+def get_metric(x, es_x):
+
+    if "$" in x:
+
+        x_bp = log(1 + float(x[1:]) / ES)
+
+    elif "x" in x:
+
+        # ES multiplier
+
+        x_bp = float(x[:-1]) * es_x
+    
+    elif "p" in x:
+
+        x_bp = log(1 + 50 * float(x[0:-1]) / ES)
+
+    else:
+
+        # basis points
+
+        x_bp = float(x)
+
+    x_dollars = ES * (e**x_bp - 1)
+
+    return x_bp, x_dollars
 
 
 if __name__ == "__main__":
@@ -148,16 +186,16 @@ if __name__ == "__main__":
     print(f"drawdown_percent:               {DRAWDOWN_PERCENT:0.4f}")
     print(f"commissions (rt):               {COMMISSIONS_ALL_IN:0.2f}")
     print(f"spread:                         ${SPREAD:0.2f}")
-    print(f"transaction_costs_percent:      ${TRANSACTION_COSTS_PERCENT:0.5f}")
+    print(f"transaction_costs_percent:      {TRANSACTION_COSTS_PERCENT:0.5f}")
     print("\n-----\n")
 
-    mu          = reward * ES_MU_DAILY
-    sigma       = risk * ES_SIGMA_DAILY
-    sharpe      = (mu - T_BILL_DAILY) / sigma * sqrt(DPY)
-    sharpe_0    = mu / sigma * sqrt(DPY)
+    mu_bp, mu_dollars       = get_metric(reward, ES_MU_DAILY)
+    sigma_bp, sigma_dollars = get_metric(risk, ES_SIGMA_DAILY)
+    sharpe                  = (mu_bp - T_BILL_DAILY) / sigma_bp * sqrt(DPY)
+    sharpe_0                = mu_bp / sigma_bp * sqrt(DPY)
 
-    print(f"reward:                         {reward:0.2f}x\t{mu * 100:0.2f}%\t${ES * (e**mu - 1) * leverage:0.2f}")
-    print(f"risk:                           {risk:0.2f}x\t{sigma * 100:0.2f}%\t${ES * (e**sigma - 1) * leverage:0.2f}")
+    print(f"reward:                         {reward}\t{mu_bp * 100:0.2f}%\tw/ leverage: ${mu_dollars * leverage:0.2f}\t{mu_bp * 100 * leverage:0.4f}%")
+    print(f"risk:                           {risk}\t{sigma_bp * 100:0.2f}%\tw/ leverage: ${sigma_dollars * leverage:0.2f}\t{sigma_bp * 100 * leverage:0.4f}%")
     print(f"leverage:                       {leverage:0.2f}x")
     print(f"runs:                           {runs}")
     print(f"trades_per_day:                 {trades_per_day}\n")
@@ -168,24 +206,26 @@ if __name__ == "__main__":
 
     (
         failure_rate, 
-        pass_rate, 
+        pass_rate,
+        withdrawal_rate,
         average_return, 
         average_prop_fees, 
         average_transaction_costs,
         average_trading_days,
         fig
-    ) = sim_runs(runs, RUN_YEARS * DPY, mu, sigma, leverage, trades_per_day, show_chart)
+    ) = sim_runs(runs, RUN_YEARS * DPY, mu_bp, sigma_bp, leverage, trades_per_day, show_chart)
 
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"eval pass rate:                 {pass_rate * 100:0.2f}%")
+    print(f"withdrawal available:           {withdrawal_rate * 100:0.2f}%")
     print(f"average trading days:           {int(ceil(average_trading_days))}")
-    print(f"average return:                 {average_return * 100:0.2f}%\t${ES * e**average_return - ES:0.2f}")
-    print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * e**average_prop_fees - ES:0.2f}")
-    print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * e**average_transaction_costs - ES:0.2f}")
+    print(f"average return:                 {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
+    print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
+    print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
 
     return_after_costs = (average_return - average_prop_fees - average_transaction_costs)
 
-    print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * e**return_after_costs - ES:0.2f}")
+    print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * (e**return_after_costs - 1):0.2f}")
 
     print("\n\n")
 
