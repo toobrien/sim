@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
     if withdrawal_frequency_days:
     
-        print(f"average_profit_share:           {average_profit_share * 100:0.2f}%\t${ES * (e**average_profit_share - 1):0.2f}\n")
+        print(f"average profit share:           {average_profit_share * 100:0.2f}%\t${ES * (e**average_profit_share - 1):0.2f}\n")
 
     return_after_costs      = average_return - average_prop_fees - average_transaction_costs - average_profit_share
     average_ending_equity   = average_return - average_transaction_costs - average_profit_share - average_withdrawn
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     if withdrawal_frequency_days:
 
         print(f"average ending equity:          {average_ending_equity * 100:0.2f}%\t${ES * (e**average_ending_equity - 1):0.2f}")
-        print(f"average_withdrawn:              {average_withdrawn * 100:0.2f}%\t${ES * (e**(average_withdrawn) - 1):0.2f}")
+        print(f"average withdrawn:              {average_withdrawn * 100:0.2f}%\t${ES * (e**(average_withdrawn) - 1):0.2f}")
 
     print("\n\n")
 
