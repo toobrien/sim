@@ -162,7 +162,7 @@ def sim_runs(
     average_transaction_costs       = log(1 + mean(transaction_costs) / ES)
     average_trading_days            = mean(run_days)
     average_profit_share            = log(1 + mean(profits_shared) / ES)
-    average_withdrawn               = mean(withdraws)
+    average_withdrawn               = log(1 + mean(withdraws) / ES)
 
     return failure_rate, passed_eval_rate, withdrawal_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, average_profit_share, average_withdrawn, fig
 
@@ -212,6 +212,10 @@ if __name__ == "__main__":
     print(f"commissions (rt):               {COMMISSIONS_ALL_IN:0.2f}")
     print(f"spread:                         ${SPREAD:0.2f}")
     print(f"transaction_costs_bp:           {TRANSACTION_COSTS_PERCENT:0.5f}")
+    print(f"withdrawal_frequency_days:      {withdrawal_frequency_days}")
+    print(f"withdrawal_amount_dollars:      ${withdrawal_amount_dollars:0.2f}")
+    print(f"profit_share_limit:             ${PROFIT_SHARE_LIMIT}")
+    print(f"profit_share_rate:              {PROFIT_SHARE_RATE * 100:0.2f}%")
     print("\n-----\n")
 
     mu_bp, mu_dollars       = get_metric(reward, ES_MU_DAILY)
@@ -259,12 +263,14 @@ if __name__ == "__main__":
     print(f"average return:                 {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
-    print(f"average_profit_share:           {average_profit_share * 100:0.2f}%")
+    print(f"average_profit_share:           {average_profit_share * 100:0.2f}%\t${ES * (e**average_profit_share - 1):0.2f}\n")
 
-    return_after_costs = (average_return - average_prop_fees - average_transaction_costs - average_profit_share)
+    return_after_costs      = average_return - average_prop_fees - average_transaction_costs - average_profit_share
+    average_ending_equity   = average_return - average_transaction_costs - average_profit_share - average_withdrawn
 
     print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * (e**return_after_costs - 1):0.2f}")
-    print(f"average_withdrawn:              ${int(average_withdrawn)}")
+    print(f"average ending equity:          {average_ending_equity * 100:0.2f}%\t${ES * (e**average_ending_equity - 1):0.2f}")
+    print(f"average_withdrawn:              {average_withdrawn * 100:0.2f}%\t${ES * (e**(average_withdrawn) - 1):0.2f}")
 
     print("\n\n")
 
