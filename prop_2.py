@@ -105,7 +105,7 @@ def sim_runs(
                 blown               =   True
                 failed              +=  1
                 run                 =   run[0:j + 1]
-                trailing_drawdown   =   run[0:j + 1]
+                trailing_drawdown   =   trailing_drawdown[0:j + 1]
 
                 break
 
@@ -129,8 +129,8 @@ def sim_runs(
                 go.Scattergl(
                     {
                         "x":        [ i for i in range(len(run)) ],
-                        "y":        [ ES * e**(run[i]) for i in range(len(run)) ],
-                        "text":     [ f"{ES * e**trailing_drawdown[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
+                        "y":        [ ES * (e**(run[i]) - 1) for i in range(len(run)) ],
+                        "text":     [ f"trailing drawdown: {ES * (e**trailing_drawdown[i] - 1):0.2f}" for i in range(0, len(trailing_drawdown)) ],
                         "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET_PERCENT else "#0000FF" }
                     }
                 )
