@@ -6,11 +6,11 @@ from    sys                     import  argv
 from    typing                  import  List, Tuple
 
 
-#                  reward risk   leverage runs trades_per_day withdrawal_frequency_days withdrawal_amount_dollars show_chart
-# python prop_2.py 1.0x   1.0x   1.0      1000 1              0                         0                         1
-# python prop_2.py \$100  \$200  1.0      1000 1              0                         0                         1
-# python prop_2.py 2p     5p     1.0      1000 1              21                        2000                      1
-# python prop_2.py 0.0003 0.0125 1.0      1000 1              63                        2000                      1
+#                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_chart
+# python prop_2.py 1.0x   1.0x   1.0      10000 1              0                         0                         1         0
+# python prop_2.py \$100  \$200  1.0      10000 1              0                         0                         1         0
+# python prop_2.py 2p     5p     1.0      1000  1              21                        2000                      2         1
+# python prop_2.py 0.0003 0.0125 1.0      1000  1              63                        2000                      2         1
 
 # risk/reward can be ES multiplier, $, ES points, or basis points
 
@@ -22,7 +22,8 @@ runs                        = int(argv[4])
 trades_per_day              = int(argv[5])
 withdrawal_frequency_days   = int(argv[6])
 withdrawal_amount_dollars   = float(argv[7])
-show_chart                  = int(argv[8])
+run_years                   = int(argv[8])
+show_chart                  = int(argv[9])
 
 
 DPY                         = 256
@@ -51,7 +52,7 @@ TRANSACTION_COSTS_PERCENT   = log(1 + TRANSACTION_COSTS / ES)
 WITHDRAWAL_AMOUNT_PCT       = log(1 + withdrawal_amount_dollars / ES)
 PROFIT_SHARE_RATE           = 0.1
 PROFIT_SHARE_LIMIT          = 10_000
-RUN_YEARS                   = 1
+
 
 #               size    eval ($/mo)     pa ($/mo)   activation fee  trailing dd     eval target
 # apex:         50,000  35              85          n/a             2,500           3,000
@@ -230,6 +231,7 @@ if __name__ == "__main__":
     print(f"daily risk:                     {risk}\t{sigma_bp * 100:0.2f}%\tw/ leverage: ${sigma_dollars * leverage:0.2f}\t{sigma_bp * 100 * leverage:0.4f}%")
     print(f"leverage:                       {leverage:0.2f}x")
     print(f"runs:                           {runs}")
+    print(f"years:                          {run_years}")
     print(f"trades_per_day:                 {trades_per_day}\n")
     print(f"sharpe (rfr = {T_BILL * 100:0.2f}%):           {sharpe:0.2f}")
     print(f"sharpe (rfr = 0):               {sharpe_0:0.2f}\t({sharpe_0 / ES_SHARPE_0:0.2f}x ES risk-adjusted return)")
@@ -249,7 +251,7 @@ if __name__ == "__main__":
         fig
     ) = sim_runs(
         runs, 
-        RUN_YEARS * DPY, 
+        run_years * DPY,
         mu_bp, 
         sigma_bp, 
         leverage, 
