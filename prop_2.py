@@ -8,7 +8,7 @@ from    typing                  import  List, Tuple
 
 #                  reward risk   leverage runs trades_per_day withdrawal_frequency_days withdrawal_amount_dollars show_chart
 # python prop_2.py 1.0x   1.0x   1.0      1000 1              0                         0                         1
-# python prop_2.py 100d   200d   1.0      1000 1              0                         0                         1
+# python prop_2.py \$100  \$200  1.0      1000 1              0                         0                         1
 # python prop_2.py 2p     5p     1.0      1000 1              21                        2000                      1
 # python prop_2.py 0.0003 0.0125 1.0      1000 1              63                        2000                      1
 
@@ -169,9 +169,9 @@ def sim_runs(
 
 def get_metric(x, es_x):
 
-    if "d" in x:
+    if "$" in x:
 
-        x_bp = log(1 + float(x[:-1]) / ES)
+        x_bp = log(1 + float(x[1:]) / ES)
 
     elif "x" in x:
 
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     print(f"runs:                           {runs}")
     print(f"trades_per_day:                 {trades_per_day}\n")
     print(f"sharpe (rfr = {T_BILL * 100:0.2f}%):           {sharpe:0.2f}")
-    print(f"sharpe (rfr = 0):               {sharpe_0:0.2f}\t({sharpe_0 / ES_SHARPE_0:0.2f}x better risk-adjusted return than ES)")
+    print(f"sharpe (rfr = 0):               {sharpe_0:0.2f}\t({sharpe_0 / ES_SHARPE_0:0.2f}x ES risk-adjusted return)")
 
     print("\n-----\n")
 
