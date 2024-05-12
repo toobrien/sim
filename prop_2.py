@@ -8,7 +8,7 @@ from    typing                  import  List, Tuple
 
 #                  reward risk   leverage runs trades_per_day withdrawal_frequency_days withdrawal_amount_dollars show_chart
 # python prop_2.py 1.0x   1.0x   1.0      1000 1              0                         0                         1
-# python prop_2.py \$100  \$200  1.0      1000 1              0                         0                         1
+# python prop_2.py 100d   200d   1.0      1000 1              0                         0                         1
 # python prop_2.py 2p     5p     1.0      1000 1              21                        2000                      1
 # python prop_2.py 0.0003 0.0125 1.0      1000 1              63                        2000                      1
 
@@ -67,6 +67,7 @@ def sim_runs(
     leverage:                   float,
     trades_per_day:             int,
     withdrawal_frequency_days:  int,
+    withdrawal_amount_dollars:  float,
     show_chart:                 bool
 ) -> List[Tuple]:
     
@@ -78,6 +79,7 @@ def sim_runs(
     prop_fees           = []
     transaction_costs   = []
     withdraws           = []
+    profits_shared      = []
     run_days            = []
 
     for i in range(runs):
@@ -112,7 +114,7 @@ def sim_runs(
                 if withdrawal_frequency_days and j % withdrawal_frequency_days == 0:
 
                     total_withdraws += 1
-                    withdrawn       += WITHDRAWAL_AMOUNT_PCT
+                    withdrawn       += withdrawal_amount_dollars
                     run[j + 1:]     -= WITHDRAWAL_AMOUNT_PCT
 
         if pt_hit:
@@ -134,7 +136,8 @@ def sim_runs(
         
         if withdrawn > PROFIT_SHARE_LIMIT:
 
-            withdrawn = PROFIT_SHARE_LIMIT + (withdrawn - PROFIT_SHARE_LIMIT) * (1 - PROFIT_SHARE_RATE)
+            profit_share    =   (withdrawn - PROFIT_SHARE_LIMIT) * PROFIT_SHARE_RATE
+            withdrawn       -=  profit_share
 
         months                  = ceil(len(run) / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
@@ -147,6 +150,7 @@ def sim_runs(
         returns.append(total_return)
         prop_fees.append(total_prop_fees)
         transaction_costs.append(total_transaction_costs)
+        profits_shared.append(profit_share)
         withdraws.append(withdrawn)
 
     failure_rate                    = failed / runs
@@ -156,16 +160,17 @@ def sim_runs(
     average_prop_fees               = log(1 + mean(prop_fees) / ES)
     average_transaction_costs       = log(1 + mean(transaction_costs) / ES)
     average_trading_days            = mean(run_days)
+    average_profit_share            = log(1 + mean(profit_share) / ES)
     average_withdrawn               = mean(withdraws)
 
-    return failure_rate, passed_eval_rate, withdrawal_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, average_withdrawn, fig
+    return failure_rate, passed_eval_rate, withdrawal_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, average_profit_share, average_withdrawn, fig
 
 
 def get_metric(x, es_x):
 
-    if "$" in x:
+    if "d" in x:
 
-        x_bp = log(1 + float(x[1:]) / ES)
+        x_bp = log(1 + float(x[:-1]) / ES)
 
     elif "x" in x:
 
@@ -231,6 +236,7 @@ if __name__ == "__main__":
         average_prop_fees,
         average_transaction_costs,
         average_trading_days,
+        average_profit_share,
         average_withdrawn,
         fig
     ) = sim_runs(
@@ -240,7 +246,8 @@ if __name__ == "__main__":
         sigma_bp, 
         leverage, 
         trades_per_day, 
-        withdrawal_frequency_days, 
+        withdrawal_frequency_days,
+        withdrawal_amount_dollars,
         show_chart
     )
 
@@ -251,11 +258,12 @@ if __name__ == "__main__":
     print(f"average return:                 {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
-    print(f"average_withdrawn:              ${average_withdrawn:0.2f}")
+    print(f"average_profit_share:           ${average_profit_share * 100:0.2f}")
 
-    return_after_costs = (average_return - average_prop_fees - average_transaction_costs)
+    return_after_costs = (average_return - average_prop_fees - average_transaction_costs - average_profit_share)
 
     print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * (e**return_after_costs - 1):0.2f}")
+    print(f"average_withdrawn:              ${int(average_withdrawn)}")
 
     print("\n\n")
 
