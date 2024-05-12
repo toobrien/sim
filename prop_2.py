@@ -262,7 +262,7 @@ if __name__ == "__main__":
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"eval pass rate:                 {pass_rate * 100:0.2f}%")
     print(f"withdraws per account:          {withdrawal_rate:0.2f}")
-    print(f"average days survived:          {int(ceil(average_trading_days))}")
+    print(f"average days survived:          {int(ceil(average_trading_days))}\n")
     print(f"expected return before costs:   {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
