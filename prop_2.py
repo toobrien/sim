@@ -89,6 +89,7 @@ def sim_runs(
         total_transaction_costs = 0
         run                     = leverage * cumsum(normal(loc = mu, scale = sigma, size = days)) - TRANSACTION_COSTS_PERCENT * trades_per_day
         trailing_drawdown       = [ max(min(max(run[:i + 1]) + DRAWDOWN_PERCENT, 0), DRAWDOWN_PERCENT) for i in range(len(run)) ]
+        profit_share            = 0
         withdrawn               = 0
         blown                   = False
         pt_hit                  = False
