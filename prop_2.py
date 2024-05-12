@@ -212,11 +212,14 @@ if __name__ == "__main__":
     print(f"commissions (rt):               {COMMISSIONS_ALL_IN:0.2f}")
     print(f"spread:                         ${SPREAD:0.2f}")
     print(f"transaction_costs_bp:           {TRANSACTION_COSTS_PERCENT:0.5f}")
-    print(f"withdrawal_frequency_days:      {withdrawal_frequency_days}")
-    print(f"withdrawal_amount_dollars:      ${withdrawal_amount_dollars:0.2f}")
-    print(f"profit_share_limit:             ${PROFIT_SHARE_LIMIT}")
-    print(f"profit_share_rate:              {PROFIT_SHARE_RATE * 100:0.2f}%")
-    print("\n-----\n")
+    
+    if withdrawal_frequency_days:
+    
+        print(f"withdrawal_frequency_days:      {withdrawal_frequency_days}")
+        print(f"withdrawal_amount_dollars:      ${withdrawal_amount_dollars:0.2f}")
+        print(f"profit_share_limit:             ${PROFIT_SHARE_LIMIT}")
+        print(f"profit_share_rate:              {PROFIT_SHARE_RATE * 100:0.2f}%")
+        print("\n-----\n")
 
     mu_bp, mu_dollars       = get_metric(reward, ES_MU_DAILY)
     sigma_bp, sigma_dollars = get_metric(risk, ES_SIGMA_DAILY)
@@ -259,18 +262,24 @@ if __name__ == "__main__":
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"eval pass rate:                 {pass_rate * 100:0.2f}%")
     print(f"withdraws per account:          {withdrawal_rate:0.2f}")
-    print(f"average trading days:           {int(ceil(average_trading_days))}")
-    print(f"average return:                 {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
+    print(f"average days survived:          {int(ceil(average_trading_days))}")
+    print(f"expected return before costs:   {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
-    print(f"average_profit_share:           {average_profit_share * 100:0.2f}%\t${ES * (e**average_profit_share - 1):0.2f}\n")
+
+    if withdrawal_frequency_days:
+    
+        print(f"average_profit_share:           {average_profit_share * 100:0.2f}%\t${ES * (e**average_profit_share - 1):0.2f}\n")
 
     return_after_costs      = average_return - average_prop_fees - average_transaction_costs - average_profit_share
     average_ending_equity   = average_return - average_transaction_costs - average_profit_share - average_withdrawn
 
     print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * (e**return_after_costs - 1):0.2f}")
-    print(f"average ending equity:          {average_ending_equity * 100:0.2f}%\t${ES * (e**average_ending_equity - 1):0.2f}")
-    print(f"average_withdrawn:              {average_withdrawn * 100:0.2f}%\t${ES * (e**(average_withdrawn) - 1):0.2f}")
+    
+    if withdrawal_frequency_days:
+
+        print(f"average ending equity:          {average_ending_equity * 100:0.2f}%\t${ES * (e**average_ending_equity - 1):0.2f}")
+        print(f"average_withdrawn:              {average_withdrawn * 100:0.2f}%\t${ES * (e**(average_withdrawn) - 1):0.2f}")
 
     print("\n\n")
 
