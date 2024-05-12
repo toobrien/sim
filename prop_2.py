@@ -161,7 +161,7 @@ def sim_runs(
     average_prop_fees               = log(1 + mean(prop_fees) / ES)
     average_transaction_costs       = log(1 + mean(transaction_costs) / ES)
     average_trading_days            = mean(run_days)
-    average_profit_share            = log(1 + mean(profit_share) / ES)
+    average_profit_share            = log(1 + mean(profits_shared) / ES)
     average_withdrawn               = mean(withdraws)
 
     return failure_rate, passed_eval_rate, withdrawal_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, average_profit_share, average_withdrawn, fig
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     print(f"average return:                 {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
-    print(f"average_profit_share:           ${average_profit_share * 100:0.2f}")
+    print(f"average_profit_share:           {average_profit_share * 100:0.2f}%")
 
     return_after_costs = (average_return - average_prop_fees - average_transaction_costs - average_profit_share)
 
