@@ -7,11 +7,11 @@ from    sys                     import  argv
 from    typing                  import  List, Tuple
 
 
-#                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_chart
-# python prop_2.py 1.0x   1.0x   1.0      10000 1              0                         0                         1         0
-# python prop_2.py \$100  \$200  1.0      10000 1              0                         0                         1         0
-# python prop_2.py 2p     5p     1.0      1000  1              21                        2000                      2         1
-# python prop_2.py 0.0003 0.0125 1.0      1000  1              63                        2000                      2         1
+#                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart
+# python prop_2.py 1.0x   1.0x   1.0      10000 1              0                         0                         1         1          0
+# python prop_2.py \$100  \$200  1.0      10000 1              0                         0                         1         1          0
+# python prop_2.py 2p     5p     1.0      1000  1              21                        2000                      2         1          1
+# python prop_2.py 0.0003 0.0125 1.0      1000  1              63                        2000                      2         1          1
 
 # risk/reward can be ES multiplier, $, ES points, or basis points
 
@@ -24,7 +24,8 @@ trades_per_day              = int(argv[5])
 withdrawal_frequency_days   = int(argv[6])
 withdrawal_amount_dollars   = float(argv[7])
 run_years                   = int(argv[8])
-show_chart                  = int(argv[9])
+show_dists                  = int(argv[9])
+show_runs                   = int(argv[10])
 
 
 DPY                         = 256
@@ -70,7 +71,7 @@ def sim_runs(
     trades_per_day:             int,
     withdrawal_frequency_days:  int,
     withdrawal_amount_dollars:  float,
-    show_chart:                 bool
+    show_runs:                  bool
 ) -> List[Tuple]:
     
     fig                 = make_subplots(rows = 1, cols = 2, column_widths = [ 0.85, 0.15 ], horizontal_spacing = 0.05)
@@ -130,7 +131,7 @@ def sim_runs(
 
             passed += 1
 
-        if show_chart:
+        if show_runs:
 
             fig.add_trace(
                 go.Scattergl(
@@ -165,7 +166,7 @@ def sim_runs(
         profits_shared.append(profit_share)
         withdraws.append(withdrawn)
 
-    if show_chart:
+    if show_runs:
 
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i > 0 ], marker_color = "#00FF00"), row = 1, col = 2)
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i <= 0 ], marker_color = "#FF0000"), row = 1, col = 2)
@@ -201,12 +202,12 @@ def get_dist_figure(
     run_days_bins       = max(run_days) - min(run_days)
 
     traces = [
-        ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#d4afb9", 1, 1 ),
-        ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#d4afb9", 1, 2 ),
-        ( withdraws, "amount withdrawn (hist)", withdraws_bins, False, "#9cadce", 2, 1 ),
-        ( withdraws, "amount withdrawn (cdf)", withdraws_bins * 10, True, "#9cadce", 2, 2 ),
-        ( run_days,  "days survived (hist)", run_days_bins, False, "#7ec4cf", 3, 1 ),
-        ( run_days,  "days survived (cdf)", run_days_bins, True, "#7ec4cf", 3, 2 ),
+        ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#03396c", 1, 1 ),
+        ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#03396c", 1, 2 ),
+        ( withdraws, "amount withdrawn (hist)", withdraws_bins, False, "#005b96", 2, 1 ),
+        ( withdraws, "amount withdrawn (cdf)", withdraws_bins * 10, True, "#005b96", 2, 2 ),
+        ( run_days,  "days survived (hist)", run_days_bins, False, "#6497b1", 3, 1 ),
+        ( run_days,  "days survived (cdf)", run_days_bins, True, "#6497b1", 3, 2 ),
     ]
 
     for trace in traces:
@@ -318,7 +319,7 @@ if __name__ == "__main__":
         trades_per_day, 
         withdrawal_frequency_days,
         withdrawal_amount_dollars,
-        show_chart
+        show_runs
     )
 
     average_return              = mean(total_returns)
@@ -352,10 +353,12 @@ if __name__ == "__main__":
 
     print("\n\n")
 
-    if show_chart:
+    if show_runs:
     
         fig_runs.show()
 
+    if show_dists:
+        
         fig_dists = get_dist_figure(raw_returns, withdraws, run_days)
 
         fig_dists.show()
