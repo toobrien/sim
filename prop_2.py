@@ -203,8 +203,8 @@ def get_dist_figure(
     traces = [
         ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#d4afb9", 1, 1 ),
         ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#d4afb9", 1, 2 ),
-        ( withdraws, "withdraws (hist)", withdraws_bins, False, "#9cadce", 2, 1 ),
-        ( withdraws, "withdraws (cdf)", withdraws_bins * 10, True, "#9cadce", 2, 2 ),
+        ( withdraws, "amount withdrawn (hist)", withdraws_bins, False, "#9cadce", 2, 1 ),
+        ( withdraws, "amount withdrawn (cdf)", withdraws_bins * 10, True, "#9cadce", 2, 2 ),
         ( run_days,  "days survived (hist)", run_days_bins, False, "#7ec4cf", 3, 1 ),
         ( run_days,  "days survived (cdf)", run_days_bins, True, "#7ec4cf", 3, 2 ),
     ]
