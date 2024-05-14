@@ -255,7 +255,7 @@ if __name__ == "__main__":
         returns, 
         prop_fees,
         transaction_costs,
-        trading_days,
+        run_days,
         profit_share,
         withdrawn,
         fig_runs
@@ -274,14 +274,14 @@ if __name__ == "__main__":
     average_return              = mean(returns)
     average_prop_fees           = log(1 + mean(prop_fees) / ES)
     average_transaction_costs   = log(1 + mean(transaction_costs) / ES)
-    average_trading_days        = mean(trading_days)
+    average_days_survived       = int(ceil(mean(run_days)))
     average_profit_share        = log(1 + mean(profit_share) / ES)
     average_withdrawn           = log(1 + mean(withdrawn) / ES)
 
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%")
     print(f"withdraws per account:          {withdrawal_rate:0.2f}")
-    print(f"average days survived:          {int(ceil(trading_days))}\n")
+    print(f"average days survived:          {average_days_survived}\n")
     print(f"expected return before costs:   {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
@@ -305,5 +305,3 @@ if __name__ == "__main__":
     if show_chart:
     
         fig_runs.show()
-
-    pass
