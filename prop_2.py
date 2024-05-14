@@ -1,4 +1,5 @@
 import  plotly.graph_objects    as      go
+from    plotly.subplots         import  make_subplots
 from    math                    import  ceil, e, log, sqrt
 from    numpy                   import  cumsum, mean
 from    numpy.random            import  normal
@@ -72,11 +73,12 @@ def sim_runs(
     show_chart:                 bool
 ) -> List[Tuple]:
     
-    fig                 = go.Figure()
+    fig                 = make_subplots(rows = 1, cols = 2, column_widths = [ 0.85, 0.15 ], horizontal_spacing = 0.05)
     failed              = 0
     passed              = 0
     total_withdraws     = 0
-    returns             = []
+    raw_returns         = []
+    total_returns       = []
     prop_fees           = []
     transaction_costs   = []
     withdraws           = []
@@ -138,7 +140,9 @@ def sim_runs(
                         "text":     [ f"trailing drawdown: {ES * (e**trailing_drawdown[i] - 1):0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
                         "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET_PERCENT else "#0000FF" }
                     }
-                )
+                ),
+                row = 1,
+                col = 1
             )
         
         if withdrawn > PROFIT_SHARE_LIMIT:
@@ -149,16 +153,22 @@ def sim_runs(
         months                  = ceil(len(run) / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * len(run))
-        total_return            = equity if not blown and equity > PROFIT_TARGET_PERCENT else 0
-        total_return            = total_return + log(1 + total_transaction_costs / ES)
+        raw_return              = equity if not blown else 0
+        total_return            = raw_return + log(1 + total_transaction_costs / ES)
         total_return            = total_return + log(1 + withdrawn / ES)
 
         run_days.append(len(run))
-        returns.append(total_return)
+        raw_returns.append(raw_return)
+        total_returns.append(total_return)
         prop_fees.append(total_prop_fees)
         transaction_costs.append(total_transaction_costs)
         profits_shared.append(profit_share)
         withdraws.append(withdrawn)
+
+    if show_chart:
+
+        fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i > 0 ], marker_color = "#00FF00"), row = 1, col = 2)
+        fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i <= 0 ], marker_color = "#FF0000"), row = 1, col = 2)
 
     failure_rate                    = failed / runs
     passed_eval_rate                = passed / runs
@@ -167,15 +177,54 @@ def sim_runs(
     return (
         failure_rate, 
         passed_eval_rate, 
-        withdrawal_rate, 
-        returns, 
+        withdrawal_rate,
+        raw_returns, 
+        total_returns, 
         prop_fees, 
         transaction_costs, 
         run_days, 
         profit_share, 
-        withdrawn, 
+        withdraws, 
         fig
     )
+
+
+def get_dist_figure(
+    raw_returns,
+    withdraws,
+    run_days
+):
+
+    fig                 = make_subplots(rows = 3, cols = 2, horizontal_spacing = 0.05)
+    raw_returns_bins    = 100
+    withdraws_bins      = ceil((max(withdraws) - min(withdraws)) / withdrawal_amount_dollars)
+    run_days_bins       = max(run_days) - min(run_days)
+
+    traces = [
+        ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#d4afb9", 1, 1 ),
+        ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#d4afb9", 1, 2 ),
+        ( withdraws, "withdraws (hist)", withdraws_bins, False, "#9cadce", 2, 1 ),
+        ( withdraws, "withdraws (cdf)", withdraws_bins * 10, True, "#9cadce", 2, 2 ),
+        ( run_days,  "days survived (hist)", run_days_bins, False, "#7ec4cf", 3, 1 ),
+        ( run_days,  "days survived (cdf)", run_days_bins, True, "#7ec4cf", 3, 2 ),
+    ]
+
+    for trace in traces:
+
+        fig.add_trace(
+            go.Histogram(
+                x                   = trace[0],
+                name                = trace[1],
+                nbinsx              = trace[2],
+                cumulative_enabled  = trace[3],
+                marker_color        = trace[4]
+
+            ),
+            row = trace[5],
+            col = trace[6]
+        )
+
+    return fig
 
 
 def get_metric(x, es_x):
@@ -252,12 +301,13 @@ if __name__ == "__main__":
         failure_rate, 
         pass_rate,
         withdrawal_rate,
-        returns, 
+        raw_returns,
+        total_returns, 
         prop_fees,
         transaction_costs,
         run_days,
         profit_share,
-        withdrawn,
+        withdraws,
         fig_runs
     ) = sim_runs(
         runs, 
@@ -271,12 +321,12 @@ if __name__ == "__main__":
         show_chart
     )
 
-    average_return              = mean(returns)
+    average_return              = mean(total_returns)
     average_prop_fees           = log(1 + mean(prop_fees) / ES)
     average_transaction_costs   = log(1 + mean(transaction_costs) / ES)
     average_days_survived       = int(ceil(mean(run_days)))
     average_profit_share        = log(1 + mean(profit_share) / ES)
-    average_withdrawn           = log(1 + mean(withdrawn) / ES)
+    average_withdrawn           = log(1 + mean(withdraws) / ES)
 
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%")
@@ -305,3 +355,7 @@ if __name__ == "__main__":
     if show_chart:
     
         fig_runs.show()
+
+        fig_dists = get_dist_figure(raw_returns, withdraws, run_days)
+
+        fig_dists.show()
