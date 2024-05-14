@@ -83,13 +83,14 @@ def sim_runs(
     profits_shared      = []
     run_days            = []
 
-    for i in range(runs):
+    for _ in range(runs):
 
         total_return            = 0
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
         run                     = leverage * cumsum(normal(loc = mu, scale = sigma, size = days)) - TRANSACTION_COSTS_PERCENT * trades_per_day
         trailing_drawdown       = [ max(min(max(run[:i + 1]) + DRAWDOWN_PERCENT, 0), DRAWDOWN_PERCENT) for i in range(len(run)) ]
+        running_withdrawals     = [ 0 for i in range(len(trailing_drawdown)) ]
         profit_share            = 0
         withdrawn               = 0
         blown                   = False
@@ -106,6 +107,8 @@ def sim_runs(
                 failed              +=  1
                 run                 =   run[0:j + 1]
                 trailing_drawdown   =   trailing_drawdown[0:j + 1]
+                
+                running_withdrawals[j] = withdrawn
 
                 break
 
@@ -119,6 +122,8 @@ def sim_runs(
                     withdrawn       += withdrawal_amount_dollars
                     run[j + 1:]     -= WITHDRAWAL_AMOUNT_PCT
 
+            running_withdrawals[j] = withdrawn
+
         if pt_hit:
 
             passed += 1
@@ -130,7 +135,7 @@ def sim_runs(
                     {
                         "x":        [ i for i in range(len(run)) ],
                         "y":        [ ES * (e**(run[i]) - 1) for i in range(len(run)) ],
-                        "text":     [ f"trailing drawdown: {ES * (e**trailing_drawdown[i] - 1):0.2f}" for i in range(0, len(trailing_drawdown)) ],
+                        "text":     [ f"trailing drawdown: {ES * (e**trailing_drawdown[i] - 1):0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
                         "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET_PERCENT else "#0000FF" }
                     }
                 )
@@ -158,14 +163,19 @@ def sim_runs(
     failure_rate                    = failed / runs
     passed_eval_rate                = passed / runs
     withdrawal_rate                 = total_withdraws / runs
-    average_return                  = mean(returns)
-    average_prop_fees               = log(1 + mean(prop_fees) / ES)
-    average_transaction_costs       = log(1 + mean(transaction_costs) / ES)
-    average_trading_days            = mean(run_days)
-    average_profit_share            = log(1 + mean(profits_shared) / ES)
-    average_withdrawn               = log(1 + mean(withdraws) / ES)
 
-    return failure_rate, passed_eval_rate, withdrawal_rate, average_return, average_prop_fees, average_transaction_costs, average_trading_days, average_profit_share, average_withdrawn, fig
+    return (
+        failure_rate, 
+        passed_eval_rate, 
+        withdrawal_rate, 
+        returns, 
+        prop_fees, 
+        transaction_costs, 
+        run_days, 
+        profit_share, 
+        withdrawn, 
+        fig
+    )
 
 
 def get_metric(x, es_x):
@@ -242,13 +252,13 @@ if __name__ == "__main__":
         failure_rate, 
         pass_rate,
         withdrawal_rate,
-        average_return, 
-        average_prop_fees,
-        average_transaction_costs,
-        average_trading_days,
-        average_profit_share,
-        average_withdrawn,
-        fig
+        returns, 
+        prop_fees,
+        transaction_costs,
+        trading_days,
+        profit_share,
+        withdrawn,
+        fig_runs
     ) = sim_runs(
         runs, 
         run_years * DPY,
@@ -261,10 +271,17 @@ if __name__ == "__main__":
         show_chart
     )
 
+    average_return              = mean(returns)
+    average_prop_fees           = log(1 + mean(prop_fees) / ES)
+    average_transaction_costs   = log(1 + mean(transaction_costs) / ES)
+    average_trading_days        = mean(trading_days)
+    average_profit_share        = log(1 + mean(profit_share) / ES)
+    average_withdrawn           = log(1 + mean(withdrawn) / ES)
+
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%")
     print(f"withdraws per account:          {withdrawal_rate:0.2f}")
-    print(f"average days survived:          {int(ceil(average_trading_days))}\n")
+    print(f"average days survived:          {int(ceil(trading_days))}\n")
     print(f"expected return before costs:   {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
     print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
     print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
@@ -287,6 +304,6 @@ if __name__ == "__main__":
 
     if show_chart:
     
-        fig.show()
+        fig_runs.show()
 
     pass
