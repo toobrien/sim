@@ -405,7 +405,7 @@ if __name__ == "__main__":
 
     print("\n-----\n")
 
-    print(f"{'':32}{'mean':<10}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<1-}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
+    print(f"{'':32}{'mean':<10}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<10}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
     
     total_return_lines          = format_stats("return before costs", total_returns)
     prop_fees_lines             = format_stats("prop fees", prop_fees) if "personal" not in mode else None
