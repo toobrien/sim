@@ -1,17 +1,17 @@
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    math                    import  ceil, e, log, sqrt
-from    numpy                   import  cumsum, mean
+from    numpy                   import  array, cumsum, mean, percentile
 from    numpy.random            import  normal
 from    sys                     import  argv
 from    typing                  import  List, Tuple
 
 
 #                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart
-# python prop_2.py 1.0x   1.0x   1.0      10000 1              0                         0                         1         1          0
-# python prop_2.py \$100  \$200  1.0      10000 1              0                         0                         1         1          0
-# python prop_2.py 2p     5p     1.0      1000  1              21                        2000                      2         1          1
-# python prop_2.py 0.0003 0.0125 1.0      1000  1              63                        2000                      2         1          1
+# python prop_2.py 1.0x   1.0x   1.0      10000 5              0                         0                         1         1          0
+# python prop_2.py \$100  \$200  1.0      10000 5              0                         0                         1         1          0
+# python prop_2.py 2p     5p     1.0      100   5              21                        2000                      2         1          1
+# python prop_2.py 0.0003 0.0125 1.0      100   5              63                        2000                      2         1          1
 
 # risk/reward can be ES multiplier, $, ES points, or basis points
 
@@ -26,6 +26,50 @@ withdrawal_amount_dollars   = float(argv[7])
 run_years                   = int(argv[8])
 show_dists                  = int(argv[9])
 show_runs                   = int(argv[10])
+mode                        = argv[11]
+
+
+#               size    eval ($/mo)     pa ($/mo)   activation fee  trailing dd     eval target
+# apex:         50,000  35              85          n/a             2,500           3,000
+# tradeday:     50,000  85              135         140             2,000           2,500
+# topstep:      50,000  50              135         150             2,000           3,000
+
+
+MODES = {
+    "personal_2k": {
+        "account_size":         2_000,
+        "drawdown":             2_000,
+        "profit_target":        2_500,
+        "buffer":               0,
+        "profit_share_rate":    0,
+        "profit_share_limit":   0,
+        "min_trading_days":     0,
+        "activation_fee":       0,
+        "pa_monthly_fee":       0
+    },
+    "tradeday_50k": {
+        "account_size":         50_000,
+        "drawdown":             2_000,
+        "profit_target":        2_500,
+        "buffer":               0,
+        "profit_share_rate":    0.10,
+        "profit_share_limit":   10_000,
+        "min_trading_days":     10,
+        "activation_fee":       100,
+        "pa_monthly_fee":       135
+    },
+    "apex_50k": {
+        "account_size":         50_000,
+        "drawdown":             2_500,
+        "profit_target":        3_000,
+        "buffer":               100,
+        "profit_share_rate":    0.10,
+        "profit_share_limit":   25_000,
+        "min_trading_days":     10,
+        "activation_fee":       0,
+        "pa_monthly_fee":       85
+    }
+}
 
 
 DPY                         = 256
@@ -39,11 +83,11 @@ ES_MU_DAILY                 = ES_MU / DPY
 ES_SIGMA_DAILY              = ES_SIGMA * sqrt(1 / DPY)
 ES_SHARPE                   = (ES_MU_DAILY - T_BILL_DAILY) / ES_SIGMA_DAILY * sqrt(DPY)
 ES_SHARPE_0                 = ES_MU_DAILY / ES_SIGMA_DAILY * sqrt(DPY)
-ACCOUNT_SIZE                = 50_000
-DRAWDOWN                    = 2_000
-MINIMUM_TRADING_DAYS        = 10
+ACCOUNT_SIZE                = MODES[mode]["account_size"]
+DRAWDOWN                    = MODES[mode]["drawdown"]
+MINIMUM_TRADING_DAYS        = MODES[mode]["min_trading_days"]
 DRAWDOWN_PERCENT            = log(1 - DRAWDOWN / ES)
-PROFIT_TARGET               = 3_000
+PROFIT_TARGET               = MODES[mode]["profit_target"]
 PROFIT_TARGET_PERCENT       = log(1 + PROFIT_TARGET / ES)
 ACTIVATION_FEE              = 100
 PA_MONTHLY_FEE              = 135
@@ -52,14 +96,10 @@ SPREAD                      = 12.5 if leverage >= 1.0 else 1.25
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
 TRANSACTION_COSTS_PERCENT   = log(1 + TRANSACTION_COSTS / ES)
 WITHDRAWAL_AMOUNT_PCT       = log(1 + withdrawal_amount_dollars / ES)
-PROFIT_SHARE_RATE           = 0.1
-PROFIT_SHARE_LIMIT          = 10_000
-
-
-#               size    eval ($/mo)     pa ($/mo)   activation fee  trailing dd     eval target
-# apex:         50,000  35              85          n/a             2,500           3,000
-# tradeday:     50,000  85              135         140             2,000           2,500
-# topstep:      50,000  50              135         150             2,000           3,000
+BUFFER                      = MODES[mode]["buffer"]
+BUFFER_PCT                  = log(1 + BUFFER / ES)
+PROFIT_SHARE_RATE           = MODES[mode]["profit_share_rate"]
+PROFIT_SHARE_LIMIT          = MODES[mode]["profit_share_limit"]
 
 
 def sim_runs(
@@ -92,7 +132,7 @@ def sim_runs(
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
         run                     = leverage * cumsum(normal(loc = mu, scale = sigma, size = days)) - TRANSACTION_COSTS_PERCENT * trades_per_day
-        trailing_drawdown       = [ max(min(max(run[:i + 1]) + DRAWDOWN_PERCENT, 0), DRAWDOWN_PERCENT) for i in range(len(run)) ]
+        trailing_drawdown       = [ max(min(max(run[:i + 1]) + DRAWDOWN_PERCENT, 0), DRAWDOWN_PERCENT) for i in range(len(run)) ] if "personal" not in mode else [ DRAWDOWN_PERCENT for i in range(len(run))]
         running_withdrawals     = [ 0 for i in range(len(trailing_drawdown)) ]
         profit_share            = 0
         withdrawn               = 0
@@ -115,7 +155,7 @@ def sim_runs(
 
                 break
 
-            elif equity >= PROFIT_TARGET_PERCENT and j > MINIMUM_TRADING_DAYS:
+            elif equity >= PROFIT_TARGET_PERCENT and j >= MINIMUM_TRADING_DAYS:
 
                 pt_hit = True
 
@@ -146,7 +186,7 @@ def sim_runs(
                 col = 1
             )
         
-        if withdrawn > PROFIT_SHARE_LIMIT:
+        if withdrawn > PROFIT_SHARE_LIMIT and "personal" not in mode:
 
             profit_share    =   (withdrawn - PROFIT_SHARE_LIMIT) * PROFIT_SHARE_RATE
             withdrawn       -=  profit_share
@@ -154,14 +194,14 @@ def sim_runs(
         months                  = ceil(len(run) / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * len(run))
-        raw_return              = equity if not blown else 0
+        raw_return              = (equity if not blown else 0) if "personal" not in mode else equity
         total_return            = raw_return + log(1 + total_transaction_costs / ES)
         total_return            = total_return + log(1 + withdrawn / ES)
 
         run_days.append(len(run))
         raw_returns.append(raw_return)
         total_returns.append(total_return)
-        prop_fees.append(total_prop_fees)
+        prop_fees.append(total_prop_fees if "personal" not in mode else 0)
         transaction_costs.append(total_transaction_costs)
         profits_shared.append(profit_share)
         withdraws.append(withdrawn)
@@ -184,7 +224,7 @@ def sim_runs(
         prop_fees, 
         transaction_costs, 
         run_days, 
-        profit_share, 
+        profits_shared, 
         withdraws, 
         fig
     )
@@ -228,6 +268,30 @@ def get_dist_figure(
     return fig
 
 
+def format_stats(name: str, x: List):
+
+    return_x = [ i * 100 for i in x ]
+    dollar_x = [ ES * (e**i - 1) for i in x ]
+    
+    return_mean = mean(return_x)
+    dollar_mean = mean(dollar_x)
+
+    percentiles = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
+
+    return_percentiles = percentile(return_x, percentiles)
+    dollar_percentiles = percentile(dollar_x, percentiles)
+
+    return_line = f"{name + ' (%):':<32}{return_mean:<10.2f}"
+    dollar_line = f"{name + ' ($):':<32}{dollar_mean:<10.2f}"
+
+    for i in range(len(percentiles)):
+
+        return_line += f"{return_percentiles[i]:<10.2f}"
+        dollar_line += f"{dollar_percentiles[i]:<10.2f}"
+
+    return return_line, dollar_line
+
+
 def get_metric(x, es_x):
 
     if "$" in x:
@@ -257,6 +321,7 @@ def get_metric(x, es_x):
 
 if __name__ == "__main__":
 
+    print(f"mode:                           {mode}")
     print(f"t_bill:                         {T_BILL:0.4f}")
     print(f"t_bill_daily:                   {T_BILL_DAILY:0.4f}")
     print(f"es_price:                       {ES / 50:0.2f}")
@@ -322,36 +387,59 @@ if __name__ == "__main__":
         show_runs
     )
 
-    average_return              = mean(total_returns)
-    average_prop_fees           = log(1 + mean(prop_fees) / ES)
-    average_transaction_costs   = log(1 + mean(transaction_costs) / ES)
-    average_days_survived       = int(ceil(mean(run_days)))
-    average_profit_share        = log(1 + mean(profit_share) / ES)
-    average_withdrawn           = log(1 + mean(withdraws) / ES)
+    average_days_survived = int(ceil(mean(run_days)))
 
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
-    print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%")
+    print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%") if "personal" not in mode else None
     print(f"withdraws per account:          {withdrawal_rate:0.2f}")
-    print(f"average days survived:          {average_days_survived}\n")
-    print(f"expected return before costs:   {average_return * 100:0.2f}%\t${ES * (e**average_return - 1):0.2f}")
-    print(f"average prop fees:              {average_prop_fees * 100:0.2f}%\t${ES * (e**average_prop_fees - 1):0.2f}")
-    print(f"average transaction costs:      {average_transaction_costs * 100:0.2f}%\t${ES * (e**average_transaction_costs - 1):0.2f}")
+    print(f"average days survived:          {average_days_survived}")
 
-    if withdrawal_frequency_days:
+    raw_returns         = array(raw_returns)
+    total_returns       = array(total_returns)
+    prop_fees           = array([ log(1 + i / ES) for i in prop_fees ])
+    transaction_costs   = array([ log(1 + i / ES) for i in transaction_costs ])
+    profit_share        = array([ log(1 + i / ES) for i in profit_share ])
+    withdraws           = array([ log(1 + i / ES) for i in withdraws ])
+    return_after_costs  = total_returns - prop_fees - transaction_costs - profit_share
+    ending_equity       = total_returns - transaction_costs - profit_share - withdraws
+
+    print("\n-----\n")
+
+    print(f"{'':32}{'mean':<10}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<1-}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
     
-        print(f"average profit share:           {average_profit_share * 100:0.2f}%\t${ES * (e**average_profit_share - 1):0.2f}\n")
+    total_return_lines          = format_stats("return before costs", total_returns)
+    prop_fees_lines             = format_stats("prop fees", prop_fees) if "personal" not in mode else None
+    transaction_costs_lines     = format_stats("transaction costs", transaction_costs)
+    profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
+    return_after_costs_lines    = format_stats("return after costs", return_after_costs)
+    ending_equity_lines         = format_stats("ending equity", ending_equity)
+    withdrawn_lines             = format_stats("amount withdrawn", withdraws)
 
-    return_after_costs      = average_return - average_prop_fees - average_transaction_costs - average_profit_share
-    average_ending_equity   = average_return - average_transaction_costs - average_profit_share - average_withdrawn
+    print(total_return_lines[0])
+    print(prop_fees_lines[0])               if "personal" not in mode else None
+    print(transaction_costs_lines[0])
+    print(profit_share_lines[0])            if (withdrawal_frequency_days and "personal" not in mode) else None
 
-    print(f"expected return after costs:    {return_after_costs * 100:0.2f}%\t${ES * (e**return_after_costs - 1):0.2f}")
-    
-    if withdrawal_frequency_days:
+    print("\n")
 
-        print(f"average ending equity:          {average_ending_equity * 100:0.2f}%\t${ES * (e**average_ending_equity - 1):0.2f}")
-        print(f"average withdrawn:              {average_withdrawn * 100:0.2f}%\t${ES * (e**(average_withdrawn) - 1):0.2f}")
+    print(return_after_costs_lines[0])
+    print(ending_equity_lines[0])           if withdrawal_frequency_days else None
+    print(withdrawn_lines[0])               if withdrawal_frequency_days else None
 
-    print("\n\n")
+    print("\n-----\n")
+
+    print(total_return_lines[1])
+    print(prop_fees_lines[1])               if "personal" not in mode else None
+    print(transaction_costs_lines[1])
+    print(profit_share_lines[1])            if (withdrawal_frequency_days and "personal" not in mode) else None
+
+    print("\n")
+
+    print(return_after_costs_lines[1])
+    print(ending_equity_lines[1])           if withdrawal_frequency_days else None
+    print(withdrawn_lines[1])               if withdrawal_frequency_days else None
+
+    print("\n")
 
     if show_runs:
     
