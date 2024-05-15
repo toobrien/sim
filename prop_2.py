@@ -4,18 +4,19 @@ from    math                    import  ceil, e, log, sqrt
 from    numpy                   import  array, cumsum, mean, percentile
 from    numpy.random            import  normal
 from    sys                     import  argv
+from    time                    import  time
 from    typing                  import  List, Tuple
 
 
-#                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart
-# python prop_2.py 1.0x   1.0x   1.0      10000 5              0                         0                         1         1          0
-# python prop_2.py \$100  \$200  1.0      10000 5              0                         0                         1         1          0
-# python prop_2.py 2p     5p     1.0      100   5              21                        2000                      2         1          1
-# python prop_2.py 0.0003 0.0125 1.0      100   5              63                        2000                      2         1          1
+#                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart mode
+# python prop_2.py 1.0x   1.0x   1.0      10000 5              0                         0                         1         1          0          tradeday_50k
+# python prop_2.py \$100  \$200  1.0      10000 5              0                         0                         1         1          0          personal_2k
+# python prop_2.py 2p     5p     1.0      100   5              21                        2000                      2         1          1          tradeday_50k
+# python prop_2.py 0.0003 0.0125 1.0      100   5              63                        2000                      2         1          1          personal_2k
 
 # risk/reward can be ES multiplier, $, ES points, or basis points
 
-
+t0                          = time()
 reward                      = argv[1]
 risk                        = argv[2]
 leverage                    = float(argv[3])
@@ -55,7 +56,7 @@ MODES = {
         "profit_share_rate":    0.10,
         "profit_share_limit":   10_000,
         "min_trading_days":     10,
-        "activation_fee":       100,
+        "activation_fee":       139,
         "pa_monthly_fee":       135
     },
     "apex_50k": {
@@ -131,7 +132,8 @@ def sim_runs(
         total_return            = 0
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
-        run                     = leverage * cumsum(normal(loc = mu, scale = sigma, size = days)) - TRANSACTION_COSTS_PERCENT * trades_per_day
+        run                     = leverage * cumsum(normal(loc = mu, scale = sigma, size = days)) 
+        run                     = run - TRANSACTION_COSTS_PERCENT * trades_per_day
         trailing_drawdown       = [ max(min(max(run[:i + 1]) + DRAWDOWN_PERCENT, 0), DRAWDOWN_PERCENT) for i in range(len(run)) ] if "personal" not in mode else [ DRAWDOWN_PERCENT for i in range(len(run))]
         running_withdrawals     = [ 0 for i in range(len(trailing_drawdown)) ]
         profit_share            = 0
@@ -270,11 +272,11 @@ def get_dist_figure(
 
 def format_stats(name: str, x: List):
 
-    return_x = [ i * 100 for i in x ]
-    dollar_x = [ ES * (e**i - 1) for i in x ]
+    return_x = [ log(1 + i / ES) * 100 for i in x ]
+    dollar_x = x
     
     return_mean = mean(return_x)
-    dollar_mean = mean(dollar_x)
+    dollar_mean = ES * (e**(return_mean / 100) - 1)
 
     percentiles = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
 
@@ -395,11 +397,11 @@ if __name__ == "__main__":
     print(f"average days survived:          {average_days_survived}")
 
     raw_returns         = array(raw_returns)
-    total_returns       = array(total_returns)
-    prop_fees           = array([ log(1 + i / ES) for i in prop_fees ])
-    transaction_costs   = array([ log(1 + i / ES) for i in transaction_costs ])
-    profit_share        = array([ log(1 + i / ES) for i in profit_share ])
-    withdraws           = array([ log(1 + i / ES) for i in withdraws ])
+    total_returns       = array([ ES * (e**i - 1) for i in total_returns ])
+    prop_fees           = array(prop_fees)
+    transaction_costs   = array(transaction_costs)
+    profit_share        = array(profit_share)
+    withdraws           = array(withdraws)
     return_after_costs  = total_returns - prop_fees - transaction_costs - profit_share
     ending_equity       = total_returns - transaction_costs - profit_share - withdraws
 
@@ -407,7 +409,7 @@ if __name__ == "__main__":
 
     print(f"{'':32}{'mean':<15}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<10}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
     
-    total_return_lines          = format_stats("return before costs", total_returns)
+    total_return_lines          = format_stats("total return", total_returns)
     prop_fees_lines             = format_stats("prop fees", prop_fees) if "personal" not in mode else None
     transaction_costs_lines     = format_stats("transaction costs", transaction_costs)
     profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
@@ -447,6 +449,8 @@ if __name__ == "__main__":
 
     if show_dists:
         
-        fig_dists = get_dist_figure(raw_returns, withdraws, run_days)
+        fig_dists = get_dist_figure(raw_returns, [ ES * (e**i - 1) for i in withdraws ], run_days)
 
         fig_dists.show()
+
+    print(f"elapsed: {time() - t0:0.1f}s")
