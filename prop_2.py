@@ -194,7 +194,7 @@ def sim_runs(
         months                  = ceil(len(run) / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * len(run))
-        raw_return              = (equity if not blown else 0) if "personal" not in mode else equity
+        raw_return              = (equity if not blown else 0) if "personal" not in mode else max(equity, DRAWDOWN_PERCENT)
         total_return            = raw_return + log(1 + total_transaction_costs / ES)
         total_return            = total_return + log(1 + withdrawn / ES)
 
@@ -281,8 +281,8 @@ def format_stats(name: str, x: List):
     return_percentiles = percentile(return_x, percentiles)
     dollar_percentiles = percentile(dollar_x, percentiles)
 
-    return_line = f"{name + ' (%):':<32}{return_mean:<10.2f}"
-    dollar_line = f"{name + ' ($):':<32}{dollar_mean:<10.2f}"
+    return_line = f"{name + ' (%):':<32}{return_mean:<10.2f}|    "
+    dollar_line = f"{name + ' ($):':<32}{dollar_mean:<10.2f}|    "
 
     for i in range(len(percentiles)):
 
@@ -321,7 +321,6 @@ def get_metric(x, es_x):
 
 if __name__ == "__main__":
 
-    print(f"mode:                           {mode}")
     print(f"t_bill:                         {T_BILL:0.4f}")
     print(f"t_bill_daily:                   {T_BILL_DAILY:0.4f}")
     print(f"es_price:                       {ES / 50:0.2f}")
@@ -389,6 +388,7 @@ if __name__ == "__main__":
 
     average_days_survived = int(ceil(mean(run_days)))
 
+    print(f"mode:                           {mode}")
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%") if "personal" not in mode else None
     print(f"withdraws per account:          {withdrawal_rate:0.2f}")
@@ -405,7 +405,7 @@ if __name__ == "__main__":
 
     print("\n-----\n")
 
-    print(f"{'':32}{'mean':<10}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<10}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
+    print(f"{'':32}{'mean':<15}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<10}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
     
     total_return_lines          = format_stats("return before costs", total_returns)
     prop_fees_lines             = format_stats("prop fees", prop_fees) if "personal" not in mode else None
