@@ -120,7 +120,7 @@ def sim_runs(
     passed              = 0
     total_withdrawals   = 0
     raw_returns         = []
-    total_returns       = []
+    ending_equities     = []
     prop_fees           = []
     transaction_costs   = []
     withdrawals         = []
@@ -129,7 +129,6 @@ def sim_runs(
 
     for _ in range(runs):
 
-        total_return            = 0
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
         run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ]) - (TRANSACTION_COSTS * trades_per_day)
@@ -195,22 +194,12 @@ def sim_runs(
         months                  = ceil(len(run) / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * len(run))
-        raw_return              = equity
-        total_return            = equity + total_transaction_costs + withdrawn
-
-        if "personal" not in mode:
-
-            raw_return      = raw_return if not blown else 0 
-            total_return    = total_return if not blown else 0
-        
-        else:
-
-            raw_return      = raw_return if not blown else DRAWDOWN
-            total_return    = total_return if not blown else DRAWDOWN
+        raw_return              = max(equity, -trail)
+        ending_equity           = max(equity, 0) if "personal" not in mode else raw_return
 
         run_days.append(len(run))
         raw_returns.append(raw_return)
-        total_returns.append(total_return)
+        ending_equities.append(ending_equity)
         prop_fees.append(total_prop_fees if "personal" not in mode else 0)
         transaction_costs.append(total_transaction_costs)
         profits_shared.append(profit_share)
@@ -230,7 +219,7 @@ def sim_runs(
         passed_eval_rate, 
         withdrawal_rate,
         array(raw_returns),
-        total_returns, 
+        array(ending_equities),
         array(prop_fees), 
         array(transaction_costs), 
         array(run_days), 
@@ -377,7 +366,7 @@ if __name__ == "__main__":
         pass_rate,
         withdrawal_rate,
         raw_returns,
-        total_returns, 
+        ending_equities,
         prop_fees,
         transaction_costs,
         run_days,
@@ -404,8 +393,8 @@ if __name__ == "__main__":
     print(f"withdrawals per account:        {withdrawal_rate:0.2f}")
     print(f"average days survived:          {average_days_survived}")
 
-    return_after_costs  = total_returns - prop_fees - transaction_costs - profit_share
-    ending_equity       = total_returns - transaction_costs - profit_share - withdrawals
+    total_returns       = ending_equities + withdrawals + transaction_costs + profit_share
+    return_after_costs  = total_returns - transaction_costs - prop_fees - profit_share
 
     print("\n-----\n")
 
@@ -416,7 +405,7 @@ if __name__ == "__main__":
     transaction_costs_lines     = format_stats("transaction costs", transaction_costs)
     profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
     return_after_costs_lines    = format_stats("return after costs", return_after_costs)
-    ending_equity_lines         = format_stats("ending equity", ending_equity)
+    ending_equity_lines         = format_stats("ending equity", ending_equities)
     withdrawn_lines             = format_stats("amount withdrawn", withdrawals)
 
     print(total_return_lines[0])
