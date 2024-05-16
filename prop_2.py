@@ -118,12 +118,12 @@ def sim_runs(
     fig                 = make_subplots(rows = 1, cols = 2, column_widths = [ 0.85, 0.15 ], horizontal_spacing = 0.05)
     failed              = 0
     passed              = 0
-    total_withdraws     = 0
+    total_withdrawals   = 0
     raw_returns         = []
     total_returns       = []
     prop_fees           = []
     transaction_costs   = []
-    withdraws           = []
+    withdrawals         = []
     profits_shared      = []
     run_days            = []
 
@@ -132,10 +132,9 @@ def sim_runs(
         total_return            = 0
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
-        run                     = leverage * cumsum(normal(loc = mu, scale = sigma, size = days)) 
-        run                     = run - TRANSACTION_COSTS_PERCENT * trades_per_day
-        trailing_drawdown       = [ max(min(max(run[:i + 1]) + DRAWDOWN_PERCENT, 0), DRAWDOWN_PERCENT) for i in range(len(run)) ] if "personal" not in mode else [ DRAWDOWN_PERCENT for i in range(len(run))]
-        running_withdrawals     = [ 0 for i in range(len(trailing_drawdown)) ]
+        run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ]) - (TRANSACTION_COSTS * trades_per_day)
+        trailing_drawdown       = [ max(min(max(run[:i + 1]) - DRAWDOWN, 0), -DRAWDOWN) for i in range(len(run)) ] if "personal" not in mode else [ -DRAWDOWN for _ in range(len(run))]
+        running_withdrawals     = [ 0 for _ in range(len(trailing_drawdown)) ]
         profit_share            = 0
         withdrawn               = 0
         blown                   = False
@@ -148,12 +147,12 @@ def sim_runs(
             
             if equity <= trail:
 
-                blown               =   True
-                failed              +=  1
-                run                 =   run[0:j + 1]
-                trailing_drawdown   =   trailing_drawdown[0:j + 1]
+                blown                   =   True
+                failed                  +=  1
+                run                     =   run[0:j + 1]
+                trailing_drawdown       =   trailing_drawdown[0:j + 1]
                 
-                running_withdrawals[j] = withdrawn
+                running_withdrawals[j]  =   withdrawn
 
                 break
 
@@ -163,9 +162,9 @@ def sim_runs(
 
                 if withdrawal_frequency_days and j % withdrawal_frequency_days == 0:
 
-                    total_withdraws += 1
-                    withdrawn       += withdrawal_amount_dollars
-                    run[j + 1:]     -= WITHDRAWAL_AMOUNT_PCT
+                    total_withdrawals   += 1
+                    withdrawn           += withdrawal_amount_dollars
+                    run[j + 1:]         -= WITHDRAWAL_AMOUNT_PCT
 
             running_withdrawals[j] = withdrawn
 
@@ -179,8 +178,8 @@ def sim_runs(
                 go.Scattergl(
                     {
                         "x":        [ i for i in range(len(run)) ],
-                        "y":        [ ES * (e**(run[i]) - 1) for i in range(len(run)) ],
-                        "text":     [ f"trailing drawdown: {ES * (e**trailing_drawdown[i] - 1):0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
+                        "y":        run,
+                        "text":     [ f"trailing drawdown: {trailing_drawdown[i]:0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
                         "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET_PERCENT else "#0000FF" }
                     }
                 ),
@@ -196,9 +195,18 @@ def sim_runs(
         months                  = ceil(len(run) / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * len(run))
-        raw_return              = (equity if not blown else 0) if "personal" not in mode else max(equity, DRAWDOWN_PERCENT)
-        total_return            = raw_return + log(1 + total_transaction_costs / ES)
-        total_return            = total_return + log(1 + withdrawn / ES)
+        raw_return              = equity
+        total_return            = equity + total_transaction_costs + withdrawn
+
+        if "personal" not in mode:
+
+            raw_return      = raw_return if not blown else 0 
+            total_return    = total_return if not blown else 0
+        
+        else:
+
+            raw_return      = raw_return if not blown else DRAWDOWN
+            total_return    = total_return if not blown else DRAWDOWN
 
         run_days.append(len(run))
         raw_returns.append(raw_return)
@@ -206,48 +214,48 @@ def sim_runs(
         prop_fees.append(total_prop_fees if "personal" not in mode else 0)
         transaction_costs.append(total_transaction_costs)
         profits_shared.append(profit_share)
-        withdraws.append(withdrawn)
+        withdrawals.append(withdrawn)
 
     if show_runs:
 
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i > 0 ], marker_color = "#00FF00"), row = 1, col = 2)
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i <= 0 ], marker_color = "#FF0000"), row = 1, col = 2)
 
-    failure_rate                    = failed / runs
-    passed_eval_rate                = passed / runs
-    withdrawal_rate                 = total_withdraws / runs
+    failure_rate        = failed / runs
+    passed_eval_rate    = passed / runs
+    withdrawal_rate     = total_withdrawals / runs
 
     return (
         failure_rate, 
         passed_eval_rate, 
         withdrawal_rate,
-        raw_returns, 
+        array(raw_returns),
         total_returns, 
-        prop_fees, 
-        transaction_costs, 
-        run_days, 
-        profits_shared, 
-        withdraws, 
+        array(prop_fees), 
+        array(transaction_costs), 
+        array(run_days), 
+        array(profits_shared), 
+        withdrawals,
         fig
     )
 
 
 def get_dist_figure(
     raw_returns,
-    withdraws,
+    withdrawals,
     run_days
 ):
 
     fig                 = make_subplots(rows = 3, cols = 2, horizontal_spacing = 0.05)
     raw_returns_bins    = 100
-    withdraws_bins      = ceil((max(withdraws) - min(withdraws)) / withdrawal_amount_dollars)
+    withdrawals_bins    = ceil((max(withdrawals) - min(withdrawals)) / withdrawal_amount_dollars)
     run_days_bins       = max(run_days) - min(run_days)
 
     traces = [
         ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#03396c", 1, 1 ),
         ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#03396c", 1, 2 ),
-        ( withdraws, "amount withdrawn (hist)", withdraws_bins, False, "#005b96", 2, 1 ),
-        ( withdraws, "amount withdrawn (cdf)", withdraws_bins * 10, True, "#005b96", 2, 2 ),
+        ( withdrawals, "amount withdrawn (hist)", withdrawals_bins, False, "#005b96", 2, 1 ),
+        ( withdrawals, "amount withdrawn (cdf)", withdrawals_bins * 10, True, "#005b96", 2, 2 ),
         ( run_days,  "days survived (hist)", run_days_bins, False, "#6497b1", 3, 1 ),
         ( run_days,  "days survived (cdf)", run_days_bins, True, "#6497b1", 3, 2 ),
     ]
@@ -374,7 +382,7 @@ if __name__ == "__main__":
         transaction_costs,
         run_days,
         profit_share,
-        withdraws,
+        withdrawals,
         fig_runs
     ) = sim_runs(
         runs, 
@@ -393,17 +401,11 @@ if __name__ == "__main__":
     print(f"mode:                           {mode}")
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%") if "personal" not in mode else None
-    print(f"withdraws per account:          {withdrawal_rate:0.2f}")
+    print(f"withdrawals per account:        {withdrawal_rate:0.2f}")
     print(f"average days survived:          {average_days_survived}")
 
-    raw_returns         = array(raw_returns)
-    total_returns       = array([ ES * (e**i - 1) for i in total_returns ])
-    prop_fees           = array(prop_fees)
-    transaction_costs   = array(transaction_costs)
-    profit_share        = array(profit_share)
-    withdraws           = array(withdraws)
     return_after_costs  = total_returns - prop_fees - transaction_costs - profit_share
-    ending_equity       = total_returns - transaction_costs - profit_share - withdraws
+    ending_equity       = total_returns - transaction_costs - profit_share - withdrawals
 
     print("\n-----\n")
 
@@ -415,7 +417,7 @@ if __name__ == "__main__":
     profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
     return_after_costs_lines    = format_stats("return after costs", return_after_costs)
     ending_equity_lines         = format_stats("ending equity", ending_equity)
-    withdrawn_lines             = format_stats("amount withdrawn", withdraws)
+    withdrawn_lines             = format_stats("amount withdrawn", withdrawals)
 
     print(total_return_lines[0])
     print(prop_fees_lines[0])               if "personal" not in mode else None
@@ -449,7 +451,7 @@ if __name__ == "__main__":
 
     if show_dists:
         
-        fig_dists = get_dist_figure(raw_returns, [ ES * (e**i - 1) for i in withdraws ], run_days)
+        fig_dists = get_dist_figure(raw_returns, withdrawals, run_days)
 
         fig_dists.show()
 
