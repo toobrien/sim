@@ -224,7 +224,7 @@ def sim_runs(
         array(transaction_costs), 
         array(run_days), 
         array(profits_shared), 
-        withdrawals,
+        array(withdrawals),
         fig
     )
 
@@ -269,11 +269,11 @@ def get_dist_figure(
 
 def format_stats(name: str, x: List):
 
-    return_x = [ log(1 + i / ES) * 100 for i in x ]
+    return_x = x / ES * 100
     dollar_x = x
     
     return_mean = mean(return_x)
-    dollar_mean = ES * (e**(return_mean / 100) - 1)
+    dollar_mean = mean(dollar_x)
 
     percentiles = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
 
@@ -393,8 +393,8 @@ if __name__ == "__main__":
     print(f"withdrawals per account:        {withdrawal_rate:0.2f}")
     print(f"average days survived:          {average_days_survived}")
 
-    total_returns       = ending_equities + withdrawals + transaction_costs + profit_share
-    return_after_costs  = total_returns - transaction_costs - prop_fees - profit_share
+    total_returns       = ending_equities + transaction_costs + profit_share + withdrawals
+    return_after_costs  = total_returns - transaction_costs - profit_share - prop_fees
 
     print("\n-----\n")
 
