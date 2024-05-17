@@ -1,2 +1,4 @@
 .vscode
 __pycache__
+val_log.py
+val_bin.py

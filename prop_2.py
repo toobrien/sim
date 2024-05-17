@@ -8,11 +8,12 @@ from    time                    import  time
 from    typing                  import  List, Tuple
 
 
-#                  reward risk   leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart mode
-# python prop_2.py 1.0x   1.0x   1.0      10000 5              0                         0                         1         1          0          tradeday_50k
-# python prop_2.py \$100  \$200  1.0      10000 5              0                         0                         1         1          0          personal_2k
-# python prop_2.py 2p     5p     1.0      100   5              21                        2000                      2         1          1          tradeday_50k
-# python prop_2.py 0.0003 0.0125 1.0      100   5              63                        2000                      2         1          1          personal_2k
+#                  reward risk    leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart mode
+# python prop_2.py 1.0x   1.0x    1.0      10000 5              0                         0                         1         1          0          tradeday_50k
+# python prop_2.py \$100  \$200   1.0      10000 5              0                         0                         1         1          0          personal_2k
+# python prop_2.py 2p     5p      1.0      100   5              21                        2000                      2         1          1          tradeday_50k
+# python prop_2.py 0.0003 0.0125  1.0      100   5              63                        2000                      2         1          1          personal_2k
+# python prop_2.py 0.6:2  0.4:2   1.0      100   5              63                        2000                      2         1          1          personal_2k
 
 # risk/reward can be ES multiplier, $, ES points, or basis points
 
@@ -87,18 +88,13 @@ ES_SHARPE_0                 = ES_MU_DAILY / ES_SIGMA_DAILY * sqrt(DPY)
 ACCOUNT_SIZE                = MODES[mode]["account_size"]
 DRAWDOWN                    = MODES[mode]["drawdown"]
 MINIMUM_TRADING_DAYS        = MODES[mode]["min_trading_days"]
-DRAWDOWN_PERCENT            = log(1 - DRAWDOWN / ES)
 PROFIT_TARGET               = MODES[mode]["profit_target"]
-PROFIT_TARGET_PERCENT       = log(1 + PROFIT_TARGET / ES)
 ACTIVATION_FEE              = 100
 PA_MONTHLY_FEE              = 135
 COMMISSIONS_ALL_IN          = 4.0 if leverage >= 1.0 else 1.2
 SPREAD                      = 12.5 if leverage >= 1.0 else 1.25
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
-TRANSACTION_COSTS_PERCENT   = log(1 + TRANSACTION_COSTS / ES)
-WITHDRAWAL_AMOUNT_PCT       = log(1 + withdrawal_amount_dollars / ES)
 BUFFER                      = MODES[mode]["buffer"]
-BUFFER_PCT                  = log(1 + BUFFER / ES)
 PROFIT_SHARE_RATE           = MODES[mode]["profit_share_rate"]
 PROFIT_SHARE_LIMIT          = MODES[mode]["profit_share_limit"]
 
@@ -127,11 +123,15 @@ def sim_runs(
     profits_shared      = []
     run_days            = []
 
+    fig.update_layout(title_text = mode)
+
     for _ in range(runs):
 
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
-        run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ]) - (TRANSACTION_COSTS * trades_per_day)
+        run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ])
+        costs                   = [ (TRANSACTION_COSTS * trades_per_day) * i for i in range(1, len(run) + 1) ]
+        run                     = run - costs
         trailing_drawdown       = [ max(min(max(run[:i + 1]) - DRAWDOWN, 0), -DRAWDOWN) for i in range(len(run)) ] if "personal" not in mode else [ -DRAWDOWN for _ in range(len(run))]
         running_withdrawals     = [ 0 for _ in range(len(trailing_drawdown)) ]
         profit_share            = 0
@@ -149,13 +149,16 @@ def sim_runs(
                 blown                   =   True
                 failed                  +=  1
                 run                     =   run[0:j + 1]
+                run[-1]                 =   trail
                 trailing_drawdown       =   trailing_drawdown[0:j + 1]
                 
                 running_withdrawals[j]  =   withdrawn
 
                 break
 
-            elif equity >= PROFIT_TARGET_PERCENT and j >= MINIMUM_TRADING_DAYS:
+            elif equity >= PROFIT_TARGET and \
+                 equity - withdrawal_amount_dollars >= BUFFER and \
+                 j >= MINIMUM_TRADING_DAYS:
 
                 pt_hit = True
 
@@ -163,7 +166,7 @@ def sim_runs(
 
                     total_withdrawals   += 1
                     withdrawn           += withdrawal_amount_dollars
-                    run[j + 1:]         -= WITHDRAWAL_AMOUNT_PCT
+                    run[j + 1:]         -= withdrawal_amount_dollars
 
             running_withdrawals[j] = withdrawn
 
@@ -179,7 +182,7 @@ def sim_runs(
                         "x":        [ i for i in range(len(run)) ],
                         "y":        run,
                         "text":     [ f"trailing drawdown: {trailing_drawdown[i]:0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
-                        "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET_PERCENT else "#0000FF" }
+                        "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET else "#0000FF" }
                     }
                 ),
                 row = 1,
@@ -191,13 +194,14 @@ def sim_runs(
             profit_share    =   (withdrawn - PROFIT_SHARE_LIMIT) * PROFIT_SHARE_RATE
             withdrawn       -=  profit_share
 
-        months                  = ceil(len(run) / DPM)
+        days_survived           = len(run)
+        months                  = ceil(days_survived / DPM)
         total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
-        total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * len(run))
-        raw_return              = max(equity, -trail)
-        ending_equity           = max(equity, 0) if "personal" not in mode else raw_return
+        total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * days_survived)
+        raw_return              = run[-1]
+        ending_equity           = max(run[-1], 0) if "personal" not in mode else raw_return
 
-        run_days.append(len(run))
+        run_days.append(days_survived)
         raw_returns.append(raw_return)
         ending_equities.append(ending_equity)
         prop_fees.append(total_prop_fees if "personal" not in mode else 0)
@@ -208,7 +212,7 @@ def sim_runs(
     if show_runs:
 
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i > 0 ], marker_color = "#00FF00"), row = 1, col = 2)
-        fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i <= 0 ], marker_color = "#FF0000"), row = 1, col = 2)
+        fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i == trail ], marker_color = "#FF0000"), row = 1, col = 2)
 
     failure_rate        = failed / runs
     passed_eval_rate    = passed / runs
@@ -237,16 +241,16 @@ def get_dist_figure(
 
     fig                 = make_subplots(rows = 3, cols = 2, horizontal_spacing = 0.05)
     raw_returns_bins    = 100
-    withdrawals_bins    = ceil((max(withdrawals) - min(withdrawals)) / withdrawal_amount_dollars)
-    run_days_bins       = max(run_days) - min(run_days)
+    withdrawals_bins    = 100 #ceil((max(withdrawals) - min(withdrawals)) / withdrawal_amount_dollars)
+    run_days_bins       = int(max(run_days) - min(run_days))
 
     traces = [
-        ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#03396c", 1, 1 ),
-        ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#03396c", 1, 2 ),
-        ( withdrawals, "amount withdrawn (hist)", withdrawals_bins, False, "#005b96", 2, 1 ),
-        ( withdrawals, "amount withdrawn (cdf)", withdrawals_bins * 10, True, "#005b96", 2, 2 ),
-        ( run_days,  "days survived (hist)", run_days_bins, False, "#6497b1", 3, 1 ),
-        ( run_days,  "days survived (cdf)", run_days_bins, True, "#6497b1", 3, 2 ),
+        ( raw_returns, "ending equity (hist)", raw_returns_bins, False, "#03396c", "", 1, 1 ),
+        ( raw_returns, "ending equity (cdf)", raw_returns_bins, True, "#03396c", "probability density", 1, 2 ),
+        ( withdrawals, "amount withdrawn (hist)", withdrawals_bins, False, "#005b96", "", 2, 1 ),
+        ( withdrawals, "amount withdrawn (cdf)", withdrawals_bins * 10, True, "#005b96", "probability density", 2, 2 ),
+        ( run_days,  "days survived (hist)", run_days_bins, False, "#6497b1", "", 3, 1 ),
+        ( run_days,  "days survived (cdf)", run_days_bins, True, "#6497b1", "probability density", 3, 2 ),
     ]
 
     for trace in traces:
@@ -257,11 +261,12 @@ def get_dist_figure(
                 name                = trace[1],
                 nbinsx              = trace[2],
                 cumulative_enabled  = trace[3],
-                marker_color        = trace[4]
+                marker_color        = trace[4],
+                histnorm            = trace[5]
 
             ),
-            row = trace[5],
-            col = trace[6]
+            row = trace[6],
+            col = trace[7]
         )
 
     return fig
@@ -318,6 +323,27 @@ def get_metric(x, es_x):
     return x_bp, x_dollars
 
 
+def get_rr_metric(reward, risk, trades_per_day):
+
+    reward_parts    = reward.split(":")
+    risk_parts      = risk.split(":")
+
+    reward_probability  = float(reward_parts[0])
+    reward_points       = float(reward_parts[1])
+    risk_probability    = float(risk_parts[0])
+    risk_points         = float(risk_parts[1])
+
+    mu_points   = (reward_probability * reward_points - risk_probability * risk_points)
+    mu_dollars  = mu_points * trades_per_day * 50
+    mu_bp       = log(1 + mu_dollars / ES)
+
+    sigma_points    = sqrt((reward_points - mu_points)**2 * reward_probability + (-risk_points - mu_points)**2 * risk_probability) * sqrt(trades_per_day)
+    sigma_dollars   = sigma_points * 50
+    sigma_bp        = log(1 + sigma_dollars / ES)
+
+    return mu_bp, mu_dollars, sigma_bp, sigma_dollars
+
+
 if __name__ == "__main__":
 
     print(f"t_bill:                         {T_BILL:0.4f}")
@@ -330,12 +356,9 @@ if __name__ == "__main__":
     print(f"es_sharpe (rfr = {T_BILL*100:0.2f}):         {ES_SHARPE:0.2f}")
     print(f"es_sharpe (rfr = 0):            {ES_SHARPE_0:0.2f}")
     print(f"profit_target:                  ${PROFIT_TARGET}")
-    print(f"profit_target_percent:          {PROFIT_TARGET_PERCENT:0.4f}")
     print(f"drawdown:                       ${DRAWDOWN}")
-    print(f"drawdown_percent:               {DRAWDOWN_PERCENT:0.4f}")
     print(f"commissions (rt):               {COMMISSIONS_ALL_IN:0.2f}")
     print(f"spread:                         ${SPREAD:0.2f}")
-    print(f"transaction_costs_bp:           {TRANSACTION_COSTS_PERCENT:0.5f}")
     
     if withdrawal_frequency_days:
     
@@ -345,8 +368,20 @@ if __name__ == "__main__":
         print(f"profit_share_rate:              {PROFIT_SHARE_RATE * 100:0.2f}%")
         print("\n-----\n")
 
-    mu_bp, mu_dollars       = get_metric(reward, ES_MU_DAILY)
-    sigma_bp, sigma_dollars = get_metric(risk, ES_SIGMA_DAILY)
+    if ":" not in reward:
+
+        mu_bp, mu_dollars       = get_metric(reward, ES_MU_DAILY)
+        sigma_bp, sigma_dollars = get_metric(risk, ES_SIGMA_DAILY)
+    
+    else:
+
+        mu_bp, mu_dollars, sigma_bp, sigma_dollars = get_rr_metric(reward, risk, trades_per_day)
+
+        reward_parts = reward.split(":")
+        risk_parts   = risk.split(":")
+        reward       = f"{int(float(reward_parts[0]) * 100)}% +{reward_parts[1]}p"
+        risk         = f"{int(float(risk_parts[0]) * 100)}% -{risk_parts[1]}p"
+
     sharpe                  = (mu_bp - T_BILL_DAILY) / sigma_bp * sqrt(DPY)
     sharpe_0                = mu_bp / sigma_bp * sqrt(DPY)
 
@@ -440,7 +475,7 @@ if __name__ == "__main__":
 
     if show_dists:
         
-        fig_dists = get_dist_figure(raw_returns, withdrawals, run_days)
+        fig_dists = get_dist_figure(ending_equities, withdrawals, run_days)
 
         fig_dists.show()
 
