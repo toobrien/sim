@@ -8,28 +8,10 @@ from    sys                     import  argv
 from    time                    import  time
 from    typing                  import  List, Tuple
 
-
 # python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 # python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 # python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 # python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-
-
-t0                          = time()
-args                        = loads(argv[1])
-reward                      = args["risk"]
-risk                        = args["reward"]
-leverage                    = args["leverage"]
-runs                        = args["runs"]
-trades_per_day              = args["trades_per_day"]
-withdrawal_frequency_days   = args["withdrawal_frequency_days"]
-withdrawal_amount_dollars   = args["withdrawal_amount_dollars"]
-run_years                   = args["run_years"]
-eval                        = args["eval"]
-max_resets                  = args["max_resets"]
-show_dists                  = args["show_dists"]
-show_runs                   = args["show_runs"]
-mode                        = args["mode"]
 
 
 #               size    eval ($/mo)     eval (min days) pa ($/mo)   activation fee  trailing dd     eval target
@@ -98,37 +80,36 @@ ES_MU_DAILY                 = ES_MU / DPY
 ES_SIGMA_DAILY              = ES_SIGMA * sqrt(1 / DPY)
 ES_SHARPE                   = (ES_MU_DAILY - T_BILL_DAILY) / ES_SIGMA_DAILY * sqrt(DPY)
 ES_SHARPE_0                 = ES_MU_DAILY / ES_SIGMA_DAILY * sqrt(DPY)
-ACCOUNT_SIZE                = MODES[mode]["account_size"]
-DRAWDOWN                    = MODES[mode]["drawdown"]
-MINIMUM_TRADING_DAYS        = MODES[mode]["min_trading_days"]
-PROFIT_TARGET               = MODES[mode]["profit_target"]
-ACTIVATION_FEE              = 100
-PA_MONTHLY_FEE              = 135
-COMMISSIONS_ALL_IN          = 4.0  if leverage >= 1.0 else 1.2
-SPREAD                      = 12.5 if leverage >= 1.0 else 1.25
-TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
-BUFFER                      = MODES[mode]["buffer"]
-PROFIT_SHARE_RATE           = MODES[mode]["profit_share_rate"]
-PROFIT_SHARE_LIMIT          = MODES[mode]["profit_share_limit"]
 
 
-def sim_eval(mu, sigma, max_resets, min_days, monthly_fees, reset_fee):
+def sim_eval(
+    mu:                 float,
+    sigma:              float,
+    profit_target:      float,
+    drawdown:           float,
+    max_resets:         int,
+    min_days:           int,
+    monthly_fees:       int,
+    reset_fee:          int,
+    transaction_costs:  float,
+    trades_per_day:     int
+):
 
     count                       = 1
     fees                        = monthly_fees
     pnl                         = 0
     days                        = 0
-    transaction_costs_per_day   = TRANSACTION_COSTS * trades_per_day
+    transaction_costs_per_day   = transaction_costs * trades_per_day
 
     while(True):
 
         pnl += ES * (e**normal(loc = mu, scale = sigma) - 1) - transaction_costs_per_day
 
-        if pnl >= PROFIT_TARGET and days >= min_days:
+        if pnl >= profit_target and days >= min_days:
 
             break
 
-        elif pnl <= -DRAWDOWN:
+        elif pnl <= -drawdown:
 
             days    = 0
             pnl     = 0
@@ -149,18 +130,28 @@ def sim_eval(mu, sigma, max_resets, min_days, monthly_fees, reset_fee):
 
 
 def sim_runs(
-    runs:                       int,
-    days:                       int,
-    mu:                         float,
-    sigma:                      float,
-    max_resets:                 int,
-    leverage:                   float,
-    trades_per_day:             int,
-    withdrawal_frequency_days:  int,
-    withdrawal_amount_dollars:  float,
-    show_runs:                  bool
+    runs:                           int,
+    days:                           int,
+    mu:                             float,
+    sigma:                          float,
+    max_resets:                     int,
+    leverage:                       float,
+    trades_per_day:                 int,
+    withdrawal_frequency_days:      int,
+    withdrawal_amount_dollars:      float,
+    transaction_costs_per_trade:    float,
+    show_runs:                      bool,
+    mode:                           str
 ) -> List[Tuple]:
 
+    profit_target       = MODES[mode]["profit_target"]
+    drawdown            = MODES[mode]["drawdown"]
+    buffer              = MODES[mode]["buffer"]
+    min_trading_days    = MODES[mode]["min_trading_days"]
+    activation_fee      = MODES[mode]["activation_fee"]
+    pa_monthly_fee      = MODES[mode]["pa_monthly_fee"]
+    profit_share_rate   = MODES[mode]["profit_share_rate"]
+    profit_share_limit  = MODES[mode]["profit_share_limit"]
     eval_min_days       = MODES[mode]["eval_min_days"]
     eval_monthly_fee    = MODES[mode]["eval_monthly_fee"]
     eval_reset_fee      = MODES[mode]["eval_reset_fee"]
@@ -183,13 +174,24 @@ def sim_runs(
 
     for _ in range(runs):
 
-        num_evals, eval_costs   = sim_eval(mu, sigma, max_resets, eval_min_days, eval_monthly_fee, eval_reset_fee) if eval else ( 0, 0 )
-        total_prop_fees         = ACTIVATION_FEE
+        num_evals, eval_costs   = sim_eval(
+                                    mu,
+                                    sigma,
+                                    profit_target,
+                                    drawdown,
+                                    max_resets,
+                                    eval_min_days,
+                                    eval_monthly_fee,
+                                    eval_reset_fee,
+                                    transaction_costs_per_trade,
+                                    trades_per_day
+                                ) if eval else ( 0, 0 )
+        total_prop_fees         = activation_fee
         total_transaction_costs = 0
         run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ])
-        costs                   = [ (TRANSACTION_COSTS * trades_per_day) * i for i in range(1, len(run) + 1) ]
+        costs                   = [ (transaction_costs_per_trade * trades_per_day) * i for i in range(1, len(run) + 1) ]
         run                     = run - costs
-        trailing_drawdown       = [ max(min(max(run[:i + 1]) - DRAWDOWN, 0), -DRAWDOWN) for i in range(len(run)) ] if "personal" not in mode else [ -DRAWDOWN for _ in range(len(run))]
+        trailing_drawdown       = [ max(min(max(run[:i + 1]) - drawdown, 0), -drawdown) for i in range(len(run)) ] if "personal" not in mode else [ -drawdown for _ in range(len(run))]
         running_withdrawals     = [ 0 for _ in range(len(trailing_drawdown)) ]
         profit_share            = 0
         withdrawn               = 0
@@ -213,9 +215,9 @@ def sim_runs(
 
                 break
 
-            elif equity >= PROFIT_TARGET and \
-                 equity - withdrawal_amount_dollars >= BUFFER and \
-                 j >= MINIMUM_TRADING_DAYS:
+            elif equity >= profit_target and \
+                 equity - withdrawal_amount_dollars >= buffer and \
+                 j >= min_trading_days:
 
                 pt_hit = True
 
@@ -239,22 +241,22 @@ def sim_runs(
                         "x":        [ i for i in range(len(run)) ],
                         "y":        run,
                         "text":     [ f"trailing drawdown: {trailing_drawdown[i]:0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
-                        "marker":   { "color": "#FF0000" if blown else "#00FF00" if equity >= PROFIT_TARGET else "#0000FF" }
+                        "marker":   { "color": "#FF0000" if blown else "#00FF00" if pt_hit else "#0000FF" }
                     }
                 ),
                 row = 1,
                 col = 1
             )
         
-        if withdrawn > PROFIT_SHARE_LIMIT and "personal" not in mode:
+        if withdrawn > profit_share_limit and "personal" not in mode:
 
-            profit_share    =   (withdrawn - PROFIT_SHARE_LIMIT) * PROFIT_SHARE_RATE
+            profit_share    =   (withdrawn - profit_share_limit) * profit_share_rate
             withdrawn       -=  profit_share
 
         days_survived           = len(run)
         months                  = ceil(days_survived / DPM)
-        total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE + eval_costs
-        total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * days_survived)
+        total_prop_fees         = total_prop_fees + months * pa_monthly_fee + eval_costs
+        total_transaction_costs = (transaction_costs_per_trade * trades_per_day * days_survived)
         raw_return              = run[-1]
         ending_equity           = max(run[-1], 0) if "personal" not in mode else raw_return
 
@@ -407,6 +409,27 @@ def get_rr_metric(reward, risk, trades_per_day):
 
 if __name__ == "__main__":
 
+    print()
+
+    t0                          = time()
+    args                        = loads(argv[1])
+    reward                      = args["risk"]
+    risk                        = args["reward"]
+    leverage                    = args["leverage"]
+    runs                        = args["runs"]
+    trades_per_day              = args["trades_per_day"]
+    withdrawal_frequency_days   = args["withdrawal_frequency_days"]
+    withdrawal_amount_dollars   = args["withdrawal_amount_dollars"]
+    run_years                   = args["run_years"]
+    eval                        = args["eval"]
+    max_resets                  = args["max_resets"]
+    show_dists                  = args["show_dists"]
+    show_runs                   = args["show_runs"]
+    mode                        = args["mode"]
+    commissions_all_in          = 4.0  if leverage >= 1.0 else 1.2
+    spread                      = 12.5 if leverage >= 1.0 else 1.25
+    transaction_costs           = commissions_all_in + spread
+
     print(f"t_bill:                         {T_BILL:0.4f}")
     print(f"t_bill_daily:                   {T_BILL_DAILY:0.4f}")
     print(f"es_price:                       {ES / 50:0.2f}")
@@ -416,17 +439,17 @@ if __name__ == "__main__":
     print(f"es_stdev_daily:                 {ES_SIGMA_DAILY:0.4f}")
     print(f"es_sharpe (rfr = {T_BILL*100:0.2f}):         {ES_SHARPE:0.2f}")
     print(f"es_sharpe (rfr = 0):            {ES_SHARPE_0:0.2f}")
-    print(f"profit_target:                  ${PROFIT_TARGET}")
-    print(f"drawdown:                       ${DRAWDOWN}")
-    print(f"commissions (rt):               {COMMISSIONS_ALL_IN:0.2f}")
-    print(f"spread:                         ${SPREAD:0.2f}")
+    print(f"profit_target:                  ${MODES[mode]['profit_target']}")
+    print(f"drawdown:                       ${-MODES[mode]['drawdown']}")
+    print(f"commissions (rt):               {commissions_all_in:0.2f}")
+    print(f"spread:                         ${spread:0.2f}")
     
     if withdrawal_frequency_days:
     
         print(f"withdrawal_frequency_days:      {withdrawal_frequency_days}")
         print(f"withdrawal_amount_dollars:      ${withdrawal_amount_dollars:0.2f}")
-        print(f"profit_share_limit:             ${PROFIT_SHARE_LIMIT}")
-        print(f"profit_share_rate:              {PROFIT_SHARE_RATE * 100:0.2f}%")
+        print(f"profit_share_limit:             ${MODES[mode]['profit_share_limit']}")
+        print(f"profit_share_rate:              {MODES[mode]['profit_share_rate'] * 100:0.2f}%")
         print("\n-----\n")
 
     if ":" not in reward:
@@ -481,7 +504,9 @@ if __name__ == "__main__":
         trades_per_day, 
         withdrawal_frequency_days,
         withdrawal_amount_dollars,
-        show_runs
+        transaction_costs,
+        show_runs,
+        mode
     )
 
     evals_per_account       = mean(eval_counts)
