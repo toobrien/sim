@@ -114,14 +114,15 @@ PROFIT_SHARE_LIMIT          = MODES[mode]["profit_share_limit"]
 
 def sim_eval(mu, sigma, max_resets, min_days, monthly_fees, reset_fee):
 
-    count = 1
-    fees  = monthly_fees
-    pnl   = 0
-    days  = 0
+    count                       = 1
+    fees                        = monthly_fees
+    pnl                         = 0
+    days                        = 0
+    transaction_costs_per_day   = TRANSACTION_COSTS * trades_per_day
 
     while(True):
 
-        pnl += ES * (e**normal(loc = mu, scale = sigma) - 1) - TRANSACTION_COSTS
+        pnl += ES * (e**normal(loc = mu, scale = sigma) - 1) - transaction_costs_per_day
 
         if pnl >= PROFIT_TARGET and days >= min_days:
 
@@ -252,7 +253,7 @@ def sim_runs(
 
         days_survived           = len(run)
         months                  = ceil(days_survived / DPM)
-        total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE + costs
+        total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE + eval_costs
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * days_survived)
         raw_return              = run[-1]
         ending_equity           = max(run[-1], 0) if "personal" not in mode else raw_return
