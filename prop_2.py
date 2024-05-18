@@ -1,3 +1,4 @@
+from    json                    import  loads
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    math                    import  ceil, e, log, sqrt
@@ -8,33 +9,33 @@ from    time                    import  time
 from    typing                  import  List, Tuple
 
 
-#                  reward risk    leverage runs  trades_per_day withdrawal_frequency_days withdrawal_amount_dollars run_years show_dists show_chart mode
-# python prop_2.py 1.0x   1.0x    1.0      10000 5              0                         0                         1         1          0          tradeday_50k
-# python prop_2.py \$100  \$200   1.0      10000 5              0                         0                         1         1          0          personal_2k
-# python prop_2.py 2p     5p      1.0      100   5              21                        2000                      2         1          1          tradeday_50k
-# python prop_2.py 0.0003 0.0125  1.0      100   5              63                        2000                      2         1          1          personal_2k
-# python prop_2.py 0.6:2  0.4:2   1.0      100   5              63                        2000                      2         1          1          personal_2k
+# python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 
-# risk/reward can be ES multiplier, $, ES points, or basis points
 
 t0                          = time()
-reward                      = argv[1]
-risk                        = argv[2]
-leverage                    = float(argv[3])
-runs                        = int(argv[4])
-trades_per_day              = int(argv[5])
-withdrawal_frequency_days   = int(argv[6])
-withdrawal_amount_dollars   = float(argv[7])
-run_years                   = int(argv[8])
-show_dists                  = int(argv[9])
-show_runs                   = int(argv[10])
-mode                        = argv[11]
+args                        = loads(argv[1])
+reward                      = args["risk"]
+risk                        = args["reward"]
+leverage                    = args["leverage"]
+runs                        = args["runs"]
+trades_per_day              = args["trades_per_day"]
+withdrawal_frequency_days   = args["withdrawal_frequency_days"]
+withdrawal_amount_dollars   = args["withdrawal_amount_dollars"]
+run_years                   = args["run_years"]
+eval                        = args["eval"]
+max_resets                  = args["max_resets"]
+show_dists                  = args["show_dists"]
+show_runs                   = args["show_runs"]
+mode                        = args["mode"]
 
 
-#               size    eval ($/mo)     pa ($/mo)   activation fee  trailing dd     eval target
-# apex:         50,000  35              85          n/a             2,500           3,000
-# tradeday:     50,000  85              135         140             2,000           2,500
-# topstep:      50,000  50              135         150             2,000           3,000
+#               size    eval ($/mo)     eval (min days) pa ($/mo)   activation fee  trailing dd     eval target
+# apex:         50,000  35              0               85          n/a             2,500           3,000
+# tradeday:     50,000  85              7               135         140             2,000           2,500
+# topstep:      50,000  50              ?               135         150             2,000           3,000
 
 
 MODES = {
@@ -47,7 +48,11 @@ MODES = {
         "profit_share_limit":   0,
         "min_trading_days":     0,
         "activation_fee":       0,
-        "pa_monthly_fee":       0
+        "pa_monthly_fee":       0,
+        "eval":                 False,
+        "eval_min_days":        0,
+        "eval_monthly_fee":     0,
+        "eval_reset_fee":       0
     },
     "tradeday_50k": {
         "account_size":         50_000,
@@ -58,7 +63,11 @@ MODES = {
         "profit_share_limit":   10_000,
         "min_trading_days":     10,
         "activation_fee":       139,
-        "pa_monthly_fee":       135
+        "pa_monthly_fee":       135,
+        "eval":                 True,
+        "eval_min_days":        7,
+        "eval_monthly_fee":     85,
+        "eval_reset_fee":       99
     },
     "apex_50k": {
         "account_size":         50_000,
@@ -69,7 +78,11 @@ MODES = {
         "profit_share_limit":   25_000,
         "min_trading_days":     10,
         "activation_fee":       0,
-        "pa_monthly_fee":       85
+        "pa_monthly_fee":       85,
+        "eval":                 True,
+        "eval_min_days":        0,
+        "eval_monthly_fee":     35,
+        "eval_reset_fee":       90
     }
 }
 
@@ -91,7 +104,7 @@ MINIMUM_TRADING_DAYS        = MODES[mode]["min_trading_days"]
 PROFIT_TARGET               = MODES[mode]["profit_target"]
 ACTIVATION_FEE              = 100
 PA_MONTHLY_FEE              = 135
-COMMISSIONS_ALL_IN          = 4.0 if leverage >= 1.0 else 1.2
+COMMISSIONS_ALL_IN          = 4.0  if leverage >= 1.0 else 1.2
 SPREAD                      = 12.5 if leverage >= 1.0 else 1.25
 TRANSACTION_COSTS           = COMMISSIONS_ALL_IN + SPREAD
 BUFFER                      = MODES[mode]["buffer"]
@@ -99,22 +112,64 @@ PROFIT_SHARE_RATE           = MODES[mode]["profit_share_rate"]
 PROFIT_SHARE_LIMIT          = MODES[mode]["profit_share_limit"]
 
 
+def sim_eval(mu, sigma, max_resets, min_days, monthly_fees, reset_fee):
+
+    count = 1
+    fees  = monthly_fees
+    pnl   = 0
+    days  = 0
+
+    while(True):
+
+        pnl += ES * (e**normal(loc = mu, scale = sigma) - 1) - TRANSACTION_COSTS
+
+        if pnl >= PROFIT_TARGET and days >= min_days:
+
+            break
+
+        elif pnl <= -DRAWDOWN:
+
+            days    = 0
+            pnl     = 0
+            count   = count + 1
+
+            if max_resets > 0:
+
+                max_resets -= 1
+                fees       += reset_fee
+
+        days += 1
+
+        if days % 21 == 0:
+
+            fees += monthly_fees
+
+    return count, fees
+
+
 def sim_runs(
     runs:                       int,
     days:                       int,
     mu:                         float,
     sigma:                      float,
+    max_resets:                 int,
     leverage:                   float,
     trades_per_day:             int,
     withdrawal_frequency_days:  int,
     withdrawal_amount_dollars:  float,
     show_runs:                  bool
 ) -> List[Tuple]:
-    
+
+    eval_min_days       = MODES[mode]["eval_min_days"]
+    eval_monthly_fee    = MODES[mode]["eval_monthly_fee"]
+    eval_reset_fee      = MODES[mode]["eval_reset_fee"]
+
     fig                 = make_subplots(rows = 1, cols = 2, column_widths = [ 0.85, 0.15 ], horizontal_spacing = 0.05)
     failed              = 0
-    passed              = 0
+    hit                 = 0
     total_withdrawals   = 0
+    eval_counts         = []
+    eval_fees           = []
     raw_returns         = []
     ending_equities     = []
     prop_fees           = []
@@ -127,6 +182,7 @@ def sim_runs(
 
     for _ in range(runs):
 
+        num_evals, eval_costs   = sim_eval(mu, sigma, max_resets, eval_min_days, eval_monthly_fee, eval_reset_fee) if eval else ( 0, 0 )
         total_prop_fees         = ACTIVATION_FEE
         total_transaction_costs = 0
         run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ])
@@ -172,7 +228,7 @@ def sim_runs(
 
         if pt_hit:
 
-            passed += 1
+            hit += 1
 
         if show_runs:
 
@@ -196,11 +252,13 @@ def sim_runs(
 
         days_survived           = len(run)
         months                  = ceil(days_survived / DPM)
-        total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE
+        total_prop_fees         = total_prop_fees + months * PA_MONTHLY_FEE + costs
         total_transaction_costs = (TRANSACTION_COSTS * trades_per_day * days_survived)
         raw_return              = run[-1]
         ending_equity           = max(run[-1], 0) if "personal" not in mode else raw_return
 
+        eval_counts.append(num_evals)
+        eval_fees.append(eval_costs)
         run_days.append(days_survived)
         raw_returns.append(raw_return)
         ending_equities.append(ending_equity)
@@ -215,13 +273,15 @@ def sim_runs(
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i == trail ], marker_color = "#FF0000"), row = 1, col = 2)
 
     failure_rate        = failed / runs
-    passed_eval_rate    = passed / runs
+    hit_rate            = hit / runs
     withdrawal_rate     = total_withdrawals / runs
 
     return (
         failure_rate, 
-        passed_eval_rate, 
+        hit_rate, 
         withdrawal_rate,
+        array(eval_counts),
+        array(eval_fees),
         array(raw_returns),
         array(ending_equities),
         array(prop_fees), 
@@ -398,8 +458,10 @@ if __name__ == "__main__":
 
     (
         failure_rate, 
-        pass_rate,
+        hit_rate,
         withdrawal_rate,
+        eval_counts,
+        eval_fees,
         raw_returns,
         ending_equities,
         prop_fees,
@@ -412,7 +474,8 @@ if __name__ == "__main__":
         runs, 
         run_years * DPY,
         mu_bp, 
-        sigma_bp, 
+        sigma_bp,
+        max_resets,
         leverage, 
         trades_per_day, 
         withdrawal_frequency_days,
@@ -420,11 +483,13 @@ if __name__ == "__main__":
         show_runs
     )
 
-    average_days_survived = int(ceil(mean(run_days)))
+    evals_per_account       = mean(eval_counts)
+    average_days_survived   = int(ceil(mean(run_days)))
 
     print(f"mode:                           {mode}")
+    print(f"evals per account:              {evals_per_account:0.2f}")
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
-    print(f"withdrawal eligible:            {pass_rate * 100:0.2f}%") if "personal" not in mode else None
+    print(f"target hit:                     {hit_rate * 100:0.2f}%") if "personal" not in mode else None
     print(f"withdrawals per account:        {withdrawal_rate:0.2f}")
     print(f"average days survived:          {average_days_survived}")
 
@@ -436,6 +501,7 @@ if __name__ == "__main__":
     print(f"{'':32}{'mean':<15}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<10}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
     
     total_return_lines          = format_stats("total return", total_returns)
+    eval_fees_lines             = format_stats("eval_fees", eval_fees) if eval else None
     prop_fees_lines             = format_stats("prop fees", prop_fees) if "personal" not in mode else None
     transaction_costs_lines     = format_stats("transaction costs", transaction_costs)
     profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
