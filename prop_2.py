@@ -485,10 +485,11 @@ if __name__ == "__main__":
     )
 
     evals_per_account       = mean(eval_counts)
+    average_eval_costs      = mean(eval_fees)
     average_days_survived   = int(ceil(mean(run_days)))
 
     print(f"mode:                           {mode}")
-    print(f"evals per account:              {evals_per_account:0.2f}")
+    print(f"evals per account:              {evals_per_account:0.2f}") if eval else None
     print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
     print(f"target hit:                     {hit_rate * 100:0.2f}%") if "personal" not in mode else None
     print(f"withdrawals per account:        {withdrawal_rate:0.2f}")
@@ -503,7 +504,7 @@ if __name__ == "__main__":
     
     total_return_lines          = format_stats("total return", total_returns)
     eval_fees_lines             = format_stats("eval_fees", eval_fees) if eval else None
-    prop_fees_lines             = format_stats("prop fees", prop_fees) if "personal" not in mode else None
+    prop_fees_lines             = format_stats("prop fees (inc. eval)" if eval else "prop fees", prop_fees) if "personal" not in mode else None
     transaction_costs_lines     = format_stats("transaction costs", transaction_costs)
     profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
     return_after_costs_lines    = format_stats("return after costs", return_after_costs)
@@ -511,6 +512,7 @@ if __name__ == "__main__":
     withdrawn_lines             = format_stats("amount withdrawn", withdrawals)
 
     print(total_return_lines[0])
+    print(eval_fees_lines[0])               if eval else None
     print(prop_fees_lines[0])               if "personal" not in mode else None
     print(transaction_costs_lines[0])
     print(profit_share_lines[0])            if (withdrawal_frequency_days and "personal" not in mode) else None
@@ -524,6 +526,7 @@ if __name__ == "__main__":
     print("\n-----\n")
 
     print(total_return_lines[1])
+    print(eval_fees_lines[1])               if eval else None
     print(prop_fees_lines[1])               if "personal" not in mode else None
     print(transaction_costs_lines[1])
     print(profit_share_lines[1])            if (withdrawal_frequency_days and "personal" not in mode) else None
