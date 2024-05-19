@@ -1,4 +1,4 @@
-from    numpy                   import  mean, median, percentile, std
+from    numpy                   import  array, concatenate, full, mean, median, percentile, std
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    prop_2                  import  sim_runs, get_metric, get_rr_metric
@@ -23,12 +23,35 @@ PARAMS = {
 }
 
 
-def print_header(title, risk, reward):
+def pad_runs(run_list: array, days: int):
 
-    print(f"\n{title}\n-----\n")
-    print(f"{'risk:':<32}{risk}")
-    print(f"{'reward:':<32}{reward}")
+    for i in range(len(run_list)):
 
+        run_i   = run_list[i]
+        to_fill = days - len(run_i)
+
+        if to_fill:
+
+            tail        = full(to_fill, run_i[-1])
+            run_list[i] = concatenate((run_i, tail))
+
+
+def v_percentile(x: array, p: float):
+    
+    lim = len(x[0])
+
+    y = [
+        percentile([ x_[i] for x_ in x ], p)
+        for i in range(lim)
+    ]
+
+    return y
+
+
+def print_header(title):
+
+    print(f"\n{title}\n\n-----\n")
+    
     for k, v in PARAMS.items():
 
         print(f"{k + ':':<32}{v}")
@@ -37,6 +60,8 @@ def print_header(title, risk, reward):
 
 
 def fig_1():
+
+    # p50 equity curve, tradeday vs personal, no withdrawals
 
     PARAMS["runs"]                      = 10_000
     mu, _, sigma, _                     = get_rr_metric("0.6:2", "0.4:2", 5)
@@ -48,12 +73,50 @@ def fig_1():
     res_tradeday_50k    = sim_runs(**PARAMS)
     tradeday_runs       = res_tradeday_50k["runs"]
 
-    PARAMS["mode"] = "personal_2k"
+    PARAMS["mode"]      = "personal_2k"
 
     res_personal_2k     = sim_runs(**PARAMS)
     personal_runs       = res_personal_2k["runs"]
 
-    pass
+    pad_runs(tradeday_runs, PARAMS["days"])
+    pad_runs(personal_runs, PARAMS["days"])
+
+    median_tradeday_run = v_percentile(tradeday_runs, 50)
+    median_personal_run = v_percentile(personal_runs, 50)
+
+    traces = [ 
+        ( median_tradeday_run, "p50 tradeday", "#FF0000" ),
+        ( median_personal_run, "p50 personal", "#0000FF")
+    ]
+    x       = [ i for i in range(PARAMS["days"]) ]
+
+    for trace in traces:
+    
+        fig.add_trace(
+            go.Scattergl(
+                {
+                    "x":        x,
+                    "y":        trace[0],
+                    "name":     trace[1],
+                    "marker":   { "color": trace[2] }
+                }
+            )
+        )
+
+    del PARAMS["mu"]
+    del PARAMS["sigma"]
+    del PARAMS["discretionary_buffer"]
+    del PARAMS["withdrawal_frequency_dollars"]
+    del PARAMS["withdrawal_amount_dollars"]
+    del PARAMS["show_runs"]
+    del PARAMS["mode"]
+
+    PARAMS["reward"]    = "60% +2pts"
+    PARAMS["risk"]      = "40% -2pts"
+
+    print_header("p50 equity curve, tradeday vs personal, no withdrawals")
+
+    fig.show()
 
 
 def test_fig():
@@ -62,10 +125,13 @@ def test_fig():
 
     res["fig"].show()
 
+    PARAMS["reward"]    = PARAMS["mu"]
+    PARAMS["risk"]      = PARAMS["sigma"]
+
     del PARAMS["mu"]
     del PARAMS["sigma"]
 
-    print_header("test", "0.0004", "0.0009")
+    print_header("test")
 
     pass
 
