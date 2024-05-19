@@ -61,7 +61,7 @@ def print_header(title):
 
 def fig_1():
 
-    # p50 equity curve, tradeday vs personal, no withdrawals
+    title = "p50 equity curve, tradeday 50k vs personal 2k, no withdrawals, 10k runs"
 
     PARAMS["runs"]                      = 10_000
     mu, _, sigma, _                     = get_rr_metric("0.6:2", "0.4:2", 5)
@@ -114,7 +114,9 @@ def fig_1():
     PARAMS["reward"]    = "60% +2pts"
     PARAMS["risk"]      = "40% -2pts"
 
-    print_header("p50 equity curve, tradeday vs personal, no withdrawals")
+    print_header(title)
+
+    fig.update_layout(title_text = title)
 
     fig.show()
 
