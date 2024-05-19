@@ -197,10 +197,11 @@ def sim_runs(
     withdrawals         = []
     profits_shared      = []
     run_days            = []
+    run_list            = []
 
     fig.update_layout(title_text = mode)
 
-    for _ in range(runs):
+    for i in range(runs):
 
         num_evals, eval_costs   = sim_eval(
                                     mu,
@@ -269,7 +270,8 @@ def sim_runs(
                         "x":        [ i for i in range(len(run)) ],
                         "y":        run,
                         "text":     [ f"trailing drawdown: {trailing_drawdown[i]:0.2f}<br>withdrawn: ${running_withdrawals[i]:0.2f}" for i in range(len(trailing_drawdown)) ],
-                        "marker":   { "color": "#FF0000" if blown else "#00FF00" if pt_hit else "#0000FF" }
+                        "marker":   { "color": "#FF0000" if blown else "#00FF00" if pt_hit else "#0000FF" },
+                        "name":     f"run {i}"
                     }
                 ),
                 row = 1,
@@ -297,6 +299,7 @@ def sim_runs(
         transaction_costs.append(total_transaction_costs)
         profits_shared.append(profit_share)
         withdrawals.append(withdrawn)
+        run_list.append(run)
 
     if show_runs:
 
@@ -320,6 +323,7 @@ def sim_runs(
         "run_days":             array(run_days), 
         "profits_shared":       array(profits_shared), 
         "withdrawals":          array(withdrawals),
+        "runs":                 run_list,
         "fig":                  fig
     }
 

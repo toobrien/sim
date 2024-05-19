@@ -14,8 +14,28 @@ year traders had a negative Sharpe of -0.04. The experienced traders,
 however, achieved a Sharpe of 1.02, significantly higher than the Dax 
 (t-test, p = 0.0001, two-tailed, n = 26. Figure 2)."
 
-----------
+-----
+
+https://www.zippia.com/advice/average-income-worldwide/
+
+average global personal income is 9,733 per year
+
+https://en.wikipedia.org/wiki/Personal_income_in_the_United_States 
+
+median us income is 41,535 per year
+
+https://www.statista.com/topics/11909/earnings-and-wages-in-europe/#topicOverview
+
+average european income is 26,136 euro per year
+
+https://www.oecd-ilibrary.org/sites/593a7dac-en/index.html?itemId=/content/component/593a7dac-en
+
+average asian income is 10,925 USD per year
+
+-----
+
+args:
 
 # "{ \"risk\": \"0.60:2\", \"reward\": \"0.40:2\", \"leverage\": 1.0, \"runs\": 100, \"discretionary_buffer\": 1000, \"trades_per_day\": 5, \"withdrawal_frequency_days\": 21, \"withdrawal_amount_dollars\": 2000, \"run_years\": 1, \"eval\": 1, \"max_resets\": 3, \"show_dists\": 0, \"show_runs\": 0, \"mode\": \"tradeday_50k\" }"
 
-----------
+-----
