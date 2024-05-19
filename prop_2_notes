@@ -4,6 +4,6 @@ Using this figure shows us that the traders' average Sharpe of 0.70 was higher t
 
 ----------
 
-# "{ \"risk\": \"0.60:2\", \"reward\": \"0.40:2\", \"leverage\": 1.0, \"runs\": 100, \"trades_per_day\": 5, \"withdrawal_frequency_days\": 21, \"withdrawal_amount_dollars\": 2000, \"run_years\": 1, \"eval\": 1, \"max_resets\": 3, \"show_dists\": 0, \"show_runs\": 0, \"mode\": \"tradeday_50k\" }"
+# "{ \"risk\": \"0.60:2\", \"reward\": \"0.40:2\", \"leverage\": 1.0, \"runs\": 100, \"discretionary_buffer\": 1000, \"trades_per_day\": 5, \"withdrawal_frequency_days\": 21, \"withdrawal_amount_dollars\": 2000, \"run_years\": 1, \"eval\": 1, \"max_resets\": 3, \"show_dists\": 0, \"show_runs\": 0, \"mode\": \"tradeday_50k\" }"
 
 ----------

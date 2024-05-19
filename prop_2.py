@@ -8,10 +8,10 @@ from    sys                     import  argv
 from    time                    import  time
 from    typing                  import  List, Tuple
 
-# python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-# python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-# python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-# python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 
 
 #               size    eval ($/mo)     eval (min days) pa ($/mo)   activation fee  trailing dd     eval target
@@ -24,47 +24,75 @@ MODES = {
     "personal_2k": {
         "account_size":         2_000,
         "drawdown":             2_000,
-        "profit_target":        2_500,
-        "buffer":               0,
+        "profit_target":        0,
+        "required_buffer":      0,
         "profit_share_rate":    0,
         "profit_share_limit":   0,
         "min_trading_days":     0,
         "activation_fee":       0,
         "pa_monthly_fee":       0,
         "eval":                 False,
+        "eval_profit_target":   0,
+        "eval_drawdown":        0,
         "eval_min_days":        0,
         "eval_monthly_fee":     0,
         "eval_reset_fee":       0
     },
     "tradeday_50k": {
         "account_size":         50_000,
+        "profit_target":        0,
         "drawdown":             2_000,
-        "profit_target":        2_500,
-        "buffer":               0,
+        "required_buffer":      0,
         "profit_share_rate":    0.10,
         "profit_share_limit":   10_000,
-        "min_trading_days":     10,
+        "min_trading_days":     0,
         "activation_fee":       139,
         "pa_monthly_fee":       135,
         "eval":                 True,
+        "eval_profit_target":   2_500,
+        "eval_drawdown":        2_000,
         "eval_min_days":        7,
         "eval_monthly_fee":     85,
         "eval_reset_fee":       99
     },
-    "apex_50k": {
+    "apex_full_rithmic_50k": {
+        # ignored apex rules:
+        #   - min/max payout for the first three months
         "account_size":         50_000,
+        "profit_target":        2_500,
         "drawdown":             2_500,
-        "profit_target":        3_000,
-        "buffer":               100,
+        "required_buffer":      100,
         "profit_share_rate":    0.10,
         "profit_share_limit":   25_000,
         "min_trading_days":     10,
         "activation_fee":       0,
         "pa_monthly_fee":       85,
         "eval":                 True,
+        "eval_profit_target":   3_000,
+        "eval_drawdown":        2_500,
+        "eval_min_days":        7,
+        "eval_monthly_fee":     167,
+        "eval_reset_fee":       80
+    },
+    "topstep_live_50k": {
+        # ignored topstep rules: 
+        #   - 50% balance withdrawal maximum, 5 winning
+        #   - 5 green days per withdrawal
+        "account_size":         50_000,
+        "profit_target":        3_000,
+        "drawdown":             2_000,
+        "required_buffer":      0,
+        "profit_share_rate":    0.10,
+        "profit_share_limit":   25_000,
+        "min_trading_days":     5,
+        "activation_fee":       149,
+        "pa_monthly_fee":       135,
+        "eval":                 True,
+        "eval_profit_target":   2_000,
+        "eval_drawdown":        3_000,
         "eval_min_days":        0,
-        "eval_monthly_fee":     35,
-        "eval_reset_fee":       90
+        "eval_monthly_fee":     49,
+        "eval_reset_fee":       49
     }
 }
 
@@ -134,6 +162,7 @@ def sim_runs(
     days:                           int,
     mu:                             float,
     sigma:                          float,
+    discretionary_buffer:           float,
     max_resets:                     int,
     leverage:                       float,
     trades_per_day:                 int,
@@ -144,17 +173,19 @@ def sim_runs(
     mode:                           str
 ) -> List[Tuple]:
 
-    profit_target       = MODES[mode]["profit_target"]
-    drawdown            = MODES[mode]["drawdown"]
-    buffer              = MODES[mode]["buffer"]
-    min_trading_days    = MODES[mode]["min_trading_days"]
-    activation_fee      = MODES[mode]["activation_fee"]
-    pa_monthly_fee      = MODES[mode]["pa_monthly_fee"]
-    profit_share_rate   = MODES[mode]["profit_share_rate"]
-    profit_share_limit  = MODES[mode]["profit_share_limit"]
-    eval_min_days       = MODES[mode]["eval_min_days"]
-    eval_monthly_fee    = MODES[mode]["eval_monthly_fee"]
-    eval_reset_fee      = MODES[mode]["eval_reset_fee"]
+    profit_target           = MODES[mode]["profit_target"]
+    drawdown                = MODES[mode]["drawdown"]
+    required_buffer         = MODES[mode]["required_buffer"]
+    min_trading_days        = MODES[mode]["min_trading_days"]
+    activation_fee          = MODES[mode]["activation_fee"]
+    pa_monthly_fee          = MODES[mode]["pa_monthly_fee"]
+    profit_share_rate       = MODES[mode]["profit_share_rate"]
+    profit_share_limit      = MODES[mode]["profit_share_limit"]
+    eval_profit_target      = MODES[mode]["eval_profit_target"]
+    eval_drawdown           = MODES[mode]["eval_drawdown"]
+    eval_min_days           = MODES[mode]["eval_min_days"]
+    eval_monthly_fee        = MODES[mode]["eval_monthly_fee"]
+    eval_reset_fee          = MODES[mode]["eval_reset_fee"]
 
     fig                 = make_subplots(rows = 1, cols = 2, column_widths = [ 0.85, 0.15 ], horizontal_spacing = 0.05)
     failed              = 0
@@ -177,8 +208,8 @@ def sim_runs(
         num_evals, eval_costs   = sim_eval(
                                     mu,
                                     sigma,
-                                    profit_target,
-                                    drawdown,
+                                    eval_profit_target,
+                                    eval_drawdown,
                                     max_resets,
                                     eval_min_days,
                                     eval_monthly_fee,
@@ -191,7 +222,7 @@ def sim_runs(
         run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ])
         costs                   = [ (transaction_costs_per_trade * trades_per_day) * i for i in range(1, len(run) + 1) ]
         run                     = run - costs
-        trailing_drawdown       = [ max(min(max(run[:i + 1]) - drawdown, 0), -drawdown) for i in range(len(run)) ] if "personal" not in mode else [ -drawdown for _ in range(len(run))]
+        trailing_drawdown       = [ max(min(max(run[:i + 1]) - drawdown, required_buffer), -drawdown) for i in range(len(run)) ] if "personal" not in mode else [ -drawdown for _ in range(len(run))]
         running_withdrawals     = [ 0 for _ in range(len(trailing_drawdown)) ]
         profit_share            = 0
         withdrawn               = 0
@@ -216,7 +247,7 @@ def sim_runs(
                 break
 
             elif equity >= profit_target and \
-                 equity - withdrawal_amount_dollars >= buffer and \
+                 equity - withdrawal_amount_dollars >= max(required_buffer, discretionary_buffer) and \
                  j >= min_trading_days:
 
                 pt_hit = True
@@ -255,7 +286,7 @@ def sim_runs(
 
         days_survived           = len(run)
         months                  = ceil(days_survived / DPM)
-        total_prop_fees         = total_prop_fees + months * pa_monthly_fee + eval_costs
+        total_prop_fees         = total_prop_fees + (months * pa_monthly_fee) + eval_costs + required_buffer
         total_transaction_costs = (transaction_costs_per_trade * trades_per_day * days_survived)
         raw_return              = run[-1]
         ending_equity           = max(run[-1], 0) if "personal" not in mode else raw_return
@@ -417,10 +448,11 @@ if __name__ == "__main__":
     risk                        = args["reward"]
     leverage                    = args["leverage"]
     runs                        = args["runs"]
+    run_years                   = args["run_years"]
     trades_per_day              = args["trades_per_day"]
     withdrawal_frequency_days   = args["withdrawal_frequency_days"]
     withdrawal_amount_dollars   = args["withdrawal_amount_dollars"]
-    run_years                   = args["run_years"]
+    discretionary_buffer        = args["discretionary_buffer"]
     eval                        = args["eval"]
     max_resets                  = args["max_resets"]
     show_dists                  = args["show_dists"]
@@ -448,6 +480,8 @@ if __name__ == "__main__":
     
         print(f"withdrawal_frequency_days:      {withdrawal_frequency_days}")
         print(f"withdrawal_amount_dollars:      ${withdrawal_amount_dollars:0.2f}")
+        print(f"required_buffer:                ${MODES[mode]['required_buffer']}")
+        print(f"discretionary_buffer:           ${discretionary_buffer}")
         print(f"profit_share_limit:             ${MODES[mode]['profit_share_limit']}")
         print(f"profit_share_rate:              {MODES[mode]['profit_share_rate'] * 100:0.2f}%")
         print("\n-----\n")
@@ -499,6 +533,7 @@ if __name__ == "__main__":
         run_years * DPY,
         mu_bp, 
         sigma_bp,
+        discretionary_buffer,
         max_resets,
         leverage, 
         trades_per_day, 

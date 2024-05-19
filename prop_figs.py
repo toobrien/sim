@@ -26,6 +26,7 @@ def fig_1():
         days                        = 256,
         mu                          = 0.0004,
         sigma                       = 0.0009,
+        discretionary_buffer        = 1000
         max_resets                  = 3,
         leverage                    = 1.0,
         trades_per_day              = 5,
