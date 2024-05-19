@@ -52,7 +52,7 @@ MODES = {
         "eval_profit_target":   2_500,
         "eval_drawdown":        2_000,
         "eval_min_days":        7,
-        "eval_monthly_fee":     85,
+        "eval_monthly_fee":     132,
         "eval_reset_fee":       99
     },
     "apex_full_rithmic_50k": {
@@ -88,8 +88,8 @@ MODES = {
         "activation_fee":       149,
         "pa_monthly_fee":       135,
         "eval":                 True,
-        "eval_profit_target":   2_000,
-        "eval_drawdown":        3_000,
+        "eval_profit_target":   3_000,
+        "eval_drawdown":        2_000,
         "eval_min_days":        0,
         "eval_monthly_fee":     49,
         "eval_reset_fee":       49
@@ -310,21 +310,21 @@ def sim_runs(
     hit_rate            = hit / runs
     withdrawal_rate     = total_withdrawals / runs
 
-    return (
-        failure_rate, 
-        hit_rate, 
-        withdrawal_rate,
-        array(eval_counts),
-        array(eval_fees),
-        array(raw_returns),
-        array(ending_equities),
-        array(prop_fees), 
-        array(transaction_costs), 
-        array(run_days), 
-        array(profits_shared), 
-        array(withdrawals),
-        fig
-    )
+    return {
+        "failure_rate":         failure_rate, 
+        "hit_rate":             hit_rate, 
+        "withdrawal_rate":      withdrawal_rate,
+        "eval_counts":          array(eval_counts),
+        "eval_fees":            array(eval_fees),
+        "raw_returns":          array(raw_returns),
+        "ending_equities":      array(ending_equities),
+        "prop_fees":            array(prop_fees), 
+        "transaction_costs":    array(transaction_costs), 
+        "run_days":             array(run_days), 
+        "profits_shared":       array(profits_shared), 
+        "withdrawals":          array(withdrawals),
+        "fig":                  fig
+    }
 
 
 def get_dist_figure(
@@ -476,6 +476,14 @@ if __name__ == "__main__":
     print(f"commissions (rt):               {commissions_all_in:0.2f}")
     print(f"spread:                         ${spread:0.2f}")
     
+    print("\n-----\n")
+    
+    for k, v in MODES[mode].items():
+
+        print(f"{k + ':':32}{v}")
+
+    print("\n-----\n")
+
     if withdrawal_frequency_days:
     
         print(f"withdrawal_frequency_days:      {withdrawal_frequency_days}")
@@ -513,22 +521,8 @@ if __name__ == "__main__":
     print(f"sharpe (rfr = 0):               {sharpe_0:0.2f}\t({sharpe_0 / ES_SHARPE_0:0.2f}x ES risk-adjusted return)")
 
     print("\n-----\n")
-
-    (
-        failure_rate, 
-        hit_rate,
-        withdrawal_rate,
-        eval_counts,
-        eval_fees,
-        raw_returns,
-        ending_equities,
-        prop_fees,
-        transaction_costs,
-        run_days,
-        profit_share,
-        withdrawals,
-        fig_runs
-    ) = sim_runs(
+    
+    res = sim_runs(
         runs, 
         run_years * DPY,
         mu_bp, 
@@ -544,32 +538,32 @@ if __name__ == "__main__":
         mode
     )
 
-    evals_per_account       = mean(eval_counts)
-    average_eval_costs      = mean(eval_fees)
-    average_days_survived   = int(ceil(mean(run_days)))
+    evals_per_account       = mean(res["eval_counts"])
+    average_eval_costs      = mean(res["eval_fees"])
+    average_days_survived   = int(ceil(mean(res["run_days"])))
 
     print(f"mode:                           {mode}")
     print(f"evals per account:              {evals_per_account:0.2f}") if eval else None
-    print(f"survival rate:                  {(1 - failure_rate) * 100:0.2f}%")
-    print(f"target hit:                     {hit_rate * 100:0.2f}%") if "personal" not in mode else None
-    print(f"withdrawals per account:        {withdrawal_rate:0.2f}")
+    print(f"survival rate:                  {(1 - res['failure_rate']) * 100:0.2f}%")
+    print(f"target hit:                     {res['hit_rate'] * 100:0.2f}%") if "personal" not in mode else None
+    print(f"withdrawals per account:        {res['withdrawal_rate']:0.2f}")
     print(f"average days survived:          {average_days_survived}")
 
-    total_returns       = ending_equities + transaction_costs + profit_share + withdrawals
-    return_after_costs  = total_returns - transaction_costs - profit_share - prop_fees
+    total_returns       = res['ending_equities'] + res['transaction_costs'] + res['profits_shared'] + res['withdrawals']
+    return_after_costs  = total_returns - res['transaction_costs'] - res['profits_shared'] - res['prop_fees']
 
     print("\n-----\n")
 
     print(f"{'':32}{'mean':<15}{'10%':<10}{'20%':<10}{'30%':<10}{'40%':<10}{'50%':<10}{'60%':<10}{'70%':<10}{'80%':<10}{'90%':<10}{'95%':<10}{'99%':<10}{'100%':<10}\n")
     
     total_return_lines          = format_stats("total return", total_returns)
-    eval_fees_lines             = format_stats("eval_fees", eval_fees) if eval else None
-    prop_fees_lines             = format_stats("prop fees (inc. eval)" if eval else "prop fees", prop_fees) if "personal" not in mode else None
-    transaction_costs_lines     = format_stats("transaction costs", transaction_costs)
-    profit_share_lines          = format_stats("profit share", profit_share) if "personal" not in mode else None
+    eval_fees_lines             = format_stats("eval_fees", res['eval_fees']) if eval else None
+    prop_fees_lines             = format_stats("prop fees (inc. eval)" if eval else "prop fees", res['prop_fees']) if "personal" not in mode else None
+    transaction_costs_lines     = format_stats("transaction costs", res['transaction_costs'])
+    profit_share_lines          = format_stats("profit share", res['profits_shared']) if "personal" not in mode else None
     return_after_costs_lines    = format_stats("return after costs", return_after_costs)
-    ending_equity_lines         = format_stats("ending equity", ending_equities)
-    withdrawn_lines             = format_stats("amount withdrawn", withdrawals)
+    ending_equity_lines         = format_stats("ending equity", res['ending_equities'])
+    withdrawn_lines             = format_stats("amount withdrawn", res['withdrawals'])
 
     print(total_return_lines[0])
     print(eval_fees_lines[0])               if eval else None
@@ -601,11 +595,11 @@ if __name__ == "__main__":
 
     if show_runs:
     
-        fig_runs.show()
+        res['fig'].show()
 
     if show_dists:
         
-        fig_dists = get_dist_figure(ending_equities, withdrawals, run_days)
+        fig_dists = get_dist_figure(res['ending_equities'], res['withdrawals'], res['run_days'])
 
         fig_dists.show()
 

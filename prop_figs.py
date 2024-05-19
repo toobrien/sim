@@ -5,39 +5,28 @@ from    sys                     import  argv
 from    time                    import  time
 
 
+PARAMS = {
+    "runs":                         100, 
+    "days":                         256,
+    "mu":                           0.0004,
+    "sigma":                        0.0009,
+    "discretionary_buffer":         1000,
+    "max_resets":                   3,
+    "leverage":                     1.0,
+    "trades_per_day":               5,
+    "withdrawal_frequency_days":    21,
+    "withdrawal_amount_dollars":    2000,
+    "transaction_costs_per_trade":  16.5,
+    "show_runs":                    1,
+    "mode":                         "tradeday_50k"
+}
+
+
 def fig_1():
 
-    (
-        failure_rate, 
-        hit_rate,
-        withdrawal_rate,
-        eval_counts,
-        eval_fees,
-        raw_returns,
-        ending_equities,
-        prop_fees,
-        transaction_costs,
-        run_days,
-        profit_share,
-        withdrawals,
-        fig_runs
-    ) = sim_runs(
-        runs                        = 100, 
-        days                        = 256,
-        mu                          = 0.0004,
-        sigma                       = 0.0009,
-        discretionary_buffer        = 1000
-        max_resets                  = 3,
-        leverage                    = 1.0,
-        trades_per_day              = 5,
-        withdrawal_frequency_days   = 21,
-        withdrawal_amount_dollars   = 2000,
-        transaction_costs_per_trade = 16.5,
-        show_runs                   = 1,
-        mode                        = "tradeday_50k"
-    )
+    res = sim_runs(**PARAMS)
 
-    fig_runs.show()
+    res["fig"].show()
 
     pass
 
