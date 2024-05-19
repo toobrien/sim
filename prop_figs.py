@@ -88,7 +88,8 @@ def fig_1():
         ( median_tradeday_run, "p50 tradeday", "#FF0000" ),
         ( median_personal_run, "p50 personal", "#0000FF")
     ]
-    x       = [ i for i in range(PARAMS["days"]) ]
+    
+    x = [ i for i in range(PARAMS["days"]) ]
 
     for trace in traces:
     
@@ -106,7 +107,7 @@ def fig_1():
     del PARAMS["mu"]
     del PARAMS["sigma"]
     del PARAMS["discretionary_buffer"]
-    del PARAMS["withdrawal_frequency_dollars"]
+    del PARAMS["withdrawal_frequency_days"]
     del PARAMS["withdrawal_amount_dollars"]
     del PARAMS["show_runs"]
     del PARAMS["mode"]
