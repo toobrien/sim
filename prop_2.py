@@ -8,16 +8,11 @@ from    sys                     import  argv
 from    time                    import  time
 from    typing                  import  List, Tuple
 
+
 # python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 # python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 # python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 # python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-
-
-#               size    eval ($/mo)     eval (min days) pa ($/mo)   activation fee  trailing dd     eval target
-# apex:         50,000  35              0               85          n/a             2,500           3,000
-# tradeday:     50,000  85              7               135         140             2,000           2,500
-# topstep:      50,000  50              ?               135         150             2,000           3,000
 
 
 MODES = {
@@ -39,6 +34,8 @@ MODES = {
         "eval_reset_fee":       0
     },
     "tradeday_50k": {
+        # ignored tradeday rules:
+        #   - no eval day greater than 30% of profit
         "account_size":         50_000,
         "profit_target":        0,
         "drawdown":             2_000,
@@ -70,8 +67,8 @@ MODES = {
         "eval":                 True,
         "eval_profit_target":   3_000,
         "eval_drawdown":        2_500,
-        "eval_min_days":        7,
-        "eval_monthly_fee":     167,
+        "eval_min_days":        1,
+        "eval_monthly_fee":     35,
         "eval_reset_fee":       80
     },
     "topstep_live_50k": {
@@ -90,7 +87,7 @@ MODES = {
         "eval":                 True,
         "eval_profit_target":   3_000,
         "eval_drawdown":        2_000,
-        "eval_min_days":        0,
+        "eval_min_days":        2,
         "eval_monthly_fee":     49,
         "eval_reset_fee":       49
     }

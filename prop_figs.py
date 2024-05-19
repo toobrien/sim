@@ -22,20 +22,39 @@ PARAMS = {
 }
 
 
-def fig_1():
+def print_header(title, risk, reward):
+
+    print(f"\n{title}\n-----\n")
+    print(f"{'risk:':<32}{risk}")
+    print(f"{'reward:':<32}{reward}")
+
+    del PARAMS["mu"]
+    del PARAMS["sigma"]
+
+    for k, v in PARAMS.items():
+
+        print(f"{k + ':':<32}{v}")
+
+    print("\n")
+
+
+def test_fig():
 
     res = sim_runs(**PARAMS)
 
     res["fig"].show()
 
+    print_header("test", "0.0004", "0.0009")
+
     pass
+
 
 if __name__ == "__main__":
 
     t0 = time()
 
-    if argv[1] == "fig_1":
+    if argv[1] == "test_fig":
 
-        fig_1()
+        test_fig()
 
-    print(f"{time() - t0:0.2f}s")
+    print(f"{time() - t0:0.2f}s\n")
