@@ -1,6 +1,5 @@
-from    numpy                   import  array, concatenate, full, mean, median, percentile, std
+from    numpy                   import  array, concatenate, full, mean, median, percentile
 import  plotly.graph_objects    as      go
-from    plotly.subplots         import  make_subplots
 from    prop_2                  import  sim_runs, get_metric, get_rr_metric
 from    sys                     import  argv
 from    time                    import  time
@@ -14,16 +13,31 @@ PARAMS          = {
                     "mu":                           0.0004,
                     "sigma":                        0.0009,
                     "discretionary_buffer":         0,
-                    "max_resets":                   3,
+                    "max_resets":                   2,
                     "leverage":                     1.0,
                     "performance_post_costs":       0,
                     "trades_per_day":               5,
-                    "withdrawal_frequency_days":    21,
-                    "withdrawal_amount_dollars":    2000,
+                    "withdrawal_frequency_days":    0,
+                    "withdrawal_amount_dollars":    0,
                     "transaction_costs_per_trade":  16.5,
                     "show_runs":                    0,
                     "mode":                         "tradeday_50k"
                 }
+
+
+def get_performance_profiles():
+
+    mu_naive, _, sigma_naive, _         = get_rr_metric("0.6:2", "0.4:2", PARAMS["trades_per_day"])
+    mu_novice, sigma_novice             = get_metric("$9.74", 0)[0], get_metric("$400", 0)[0]
+    mu_experienced, sigma_experienced   = get_metric("$25.49", 0)[0], get_metric("$400", 0)[0]
+
+    profiles = [
+        ( mu_novice, sigma_novice, 1, "novice" ),
+        ( mu_experienced, sigma_experienced, 1, "experienced" ),
+        ( mu_naive, sigma_naive, 0, "naive" )
+    ]
+
+    return profiles
 
 
 def get_total_and_after_cost_returns(res):
@@ -59,31 +73,42 @@ def v_percentile(x: array, p: float):
     return y
 
 
-def print_header(title):
-
-    print(f"\n{title}\n\n-----\n")
-    
-    for k, v in PARAMS.items():
-
-        print(f"{k + ':':<32}{v}")
-
-    print("\n")
-
-
 def fig_1():
 
-    PARAMS["runs"]                      = 10_000
-    mu, _, sigma, _                     = get_rr_metric("0.6:2", "0.4:2", 5)
+    text = [
+        "median equity curve by day",
+        "tradeday 50k vs personal 2k",
+        "naive:         sharpe = 7.30, reward = 60% +2pt, risk = 40% -2pt",
+        "novice:        sharpe = 0.39, reward = $9.74,    risk = $400,",
+        "experienced:   sharpe = 1.02, reward = $25.49,   risk = $400",
+        "5 trades per day",
+        "no withdrawals",
+        "2 resets maximum"
+        "1 year",
+        f"{PARAMS['runs']} runs"
+    ]
+
+    for line in text:
+
+        print(line)
+
+    for profile in get_performance_profiles():
+
+        fig_1_plot(*profile)
+
+
+def fig_1_plot(mu: float, sigma: float, performance_post_costs: int, profile: str):
+
     PARAMS["mu"]                        = mu
     PARAMS["sigma"]                     = sigma
-    PARAMS["withdrawal_frequency_days"] = 0
+    PARAMS["performance_post_costs"]    = performance_post_costs
     fig                                 = go.Figure()
 
+    PARAMS["mode"]      = "tradeday_50k"
     res_tradeday_50k    = sim_runs(**PARAMS)
     tradeday_runs       = res_tradeday_50k["runs"]
 
     PARAMS["mode"]      = "personal_2k"
-
     res_personal_2k     = sim_runs(**PARAMS)
     personal_runs       = res_personal_2k["runs"]
 
@@ -94,8 +119,8 @@ def fig_1():
     median_personal_run = v_percentile(personal_runs, 50)
 
     traces = [ 
-        ( median_tradeday_run, "p50 tradeday", FUNDED_COLOR   ),
-        ( median_personal_run, "p50 personal", PERSONAL_COLOR )
+        ( median_tradeday_run, f"median tradeday {profile}", FUNDED_COLOR   ),
+        ( median_personal_run, f"median personal {profile}", PERSONAL_COLOR )
     ]
     
     x = [ i for i in range(PARAMS["days"]) ]
@@ -113,44 +138,38 @@ def fig_1():
             )
         )
 
-    del PARAMS["mu"]
-    del PARAMS["sigma"]
-    del PARAMS["discretionary_buffer"]
-    del PARAMS["withdrawal_frequency_days"]
-    del PARAMS["withdrawal_amount_dollars"]
-    del PARAMS["show_runs"]
-    del PARAMS["mode"]
-
-    PARAMS["reward"]                    = "60% +2pts"
-    PARAMS["risk"]                      = "40% -2pts"
-    PARAMS["performance_post_costs"]    = 0
-
-    title = [
-        "p50 equity curve by day",
-        "tradeday 50k vs personal 2k",
-        "60% +2pt, 40% -2pt, 5 trades daily"
-        "no withdrawals"
-        "1 year",
-        "10k runs"
-    ]
-
-    for line in title:
-
-        print(title)
-
     fig.show()
 
 
 def fig_2():
 
-    PARAMS["runs"]                      = 10_000
-    mu, _, sigma, _                     = get_rr_metric("0.6:2", "0.4:2", 5)
+    text = [
+            "percentiles, returns (total and after fees)"
+            "tradeday 50k vs personal 2k",
+            "60% win rate, 2pt risk and reward, 5 trades daily",
+            "0 withdrawals",
+            "1 year",
+            "2 resets, maximum",
+            f"{PARAMS['runs']} runs\n"
+        ]
+    
+    for line in text:
+
+        print(line)
+
+    for profile in get_performance_profiles():
+
+        fig_2_plot(*profile)
+
+
+def fig_2_plot(mu: float, sigma: float, performance_post_costs: int, profile: str):
+
     PARAMS["mu"]                        = mu
     PARAMS["sigma"]                     = sigma
-    PARAMS["withdrawal_frequency_days"] = 0
-    fig_total                           = go.Figure()
-    fig_after                           = go.Figure()
+    PARAMS["performance_post_costs"]    = performance_post_costs
+    fig                                 = go.Figure()
 
+    PARAMS["mode"]  = "tradeday_50k"
     funded_runs     = sim_runs(**PARAMS)
     PARAMS["mode"]  = "personal_2k"
     personal_runs   = sim_runs(**PARAMS)
@@ -167,15 +186,13 @@ def fig_2():
     personal_after_y    = [ percentile(personal_after_cost_returns, x_) for x_ in x ]
 
     traces = [
-        ( funded_total_y,   "tradeday total returns",       fig_total, FUNDED_COLOR   ),
-        ( personal_total_y, "personal total returns",       fig_total, PERSONAL_COLOR ),
-        ( funded_after_y,   "tradeday after cost returns",  fig_after, FUNDED_COLOR   ),
-        ( personal_after_y, "personal after cost returns",  fig_after, PERSONAL_COLOR )
+        ( funded_total_y,   f"{profile} tradeday total returns",       FUNDED_COLOR,   0.3 ),
+        ( funded_after_y,   f"{profile} tradeday after cost returns",  FUNDED_COLOR,   1.0 ),
+        ( personal_total_y, f"{profile} personal total returns",       PERSONAL_COLOR, 0.3 ),
+        ( personal_after_y, f"{profile} personal after cost returns",  PERSONAL_COLOR, 1.0 )
     ]
 
     for trace in traces:
-
-        fig = trace[2]
 
         fig.add_trace(
             go.Scatter(
@@ -183,40 +200,13 @@ def fig_2():
                     "x":        x,
                     "y":        trace[0],
                     "name":     trace[1],
-                    "marker":   { "color": trace[3] }
+                    "marker":   { "color": trace[2] },
+                    "opacity":  trace[3]
                 }
             )
         )
 
-    del PARAMS["mu"]
-    del PARAMS["sigma"]
-    del PARAMS["discretionary_buffer"]
-    del PARAMS["withdrawal_frequency_days"]
-    del PARAMS["withdrawal_amount_dollars"]
-    del PARAMS["show_runs"]
-    del PARAMS["mode"]
-
-    PARAMS["reward"]    = "60% +2pts"
-    PARAMS["risk"]      = "40% -2pts"
-
-    title = [
-            "percentiles, returns (total and after fees)"
-            "tradeday 50k vs personal 2k",
-            "60% +2pt, 40% -2pt",
-            "5 trades daily",
-            "no withdrawals",
-            "1 year",
-            "10k runs"
-        ]
-    
-    for line in title:
-
-        print(line)
-
-    fig_total.show()
-    fig_after.show()
-
-    pass
+    fig.show()
 
 
 def fig_3():
@@ -237,8 +227,9 @@ def fig_3():
         #sigma = 0.001,      $250  mu = 0.000024375, $6.09
         #sigma = 0.001599,   $400  mu = 0.000038976, $9.74
     
-    PARAMS["runs"]          = 100
-    PARAMS["max_resets"]    = 0
+
+    counts                  = {}
+    PARAMS["runs"]          = 10_000
     
     x = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
 
@@ -252,6 +243,7 @@ def fig_3():
 
         runs                = sim_runs(**PARAMS)
         eval_fees           = runs["eval_fees"]
+        counts[trace[2]]    = runs["eval_counts"]
         results[trace[2]]   = eval_fees
 
         fig.add_trace(
@@ -263,28 +255,34 @@ def fig_3():
                 }
             )
         )
-    
-    title = [
-                "evals costs per pass",
-                "tradeday 50k",
-                "5 trades daily",
-                "no resets, 10k runs"
-                "\n\n-----\n\n",
-                "naive (sharpe 7.30):       60%         +2pt, 40%       -2pt",
-                "novice (sharpe 0.39):      50.55%      +2pt, 49.45%    -2pt",
-                "experienced (sharpe 1.02): 51.425%     +2pt, 48.575    -2pt",
-                "\n\n-----\n\n",
-                f"{'':20}{'mean':20}{'median':20}",
-                f"{'naive':20}${mean(results['naive']):<19.2f}${median(results['naive']):<19.2f}",
-                f"{'novice':20}${mean(results['novice']):<19.2f}${median(results['novice']):<19.2f}",
-                f"{'experienced':20}${mean(results['experienced']):<19.2f}${median(results['experienced']):<19.2f}"
-            ]
 
-    for line in title:
+    text = [
+        "\nevals costs per pass",
+        "tradeday 50k",
+        "5 trades daily",
+        "2 resets, maximum"
+        f"{PARAMS['runs']} runs",
+        "\n-----\n",
+        f"{'':20}{'sharpe':12}{'win rate':12}{'risk':12}{'reward':12}\n",
+        f"{'naive':20}{7.30:<12.2f}{'60%':12}{'2 points':12}{'2 points':12}",
+        f"{'novice (<2yr)':20}{0.39:<12.2f}{'50.55%':12}{'$400':12}{'$9.74':12}",
+        f"{'experienced (>2yr)':20}{1.02:<12.2f}{'51.425%':12}{'$400':12}{'$25.49':12}",
+        "\n-----\n",
+        f"{'':20}{'mean':12}{'median':12}\n",
+        f"{'naive':20}${mean(results['naive']):<11.2f}${median(results['naive']):<11.2f}",
+        f"{'novice':20}${mean(results['novice']):<11.2f}${median(results['novice']):<11.2f}",
+        f"{'experienced':20}${mean(results['experienced']):<11.2f}${median(results['experienced']):<11.2f}\n"
+        "\n-----\n",
+        "evals per pass\n",
+        f"{'':20}{'mean':12}{'median':12}",
+        f"{'naive':20}{mean(counts['naive']):<12.1f}{median(counts['naive']):<12.1f}",
+        f"{'novice':20}{mean(counts['novice']):<12.1f}{median(counts['novice']):<12.1f}",
+        f"{'experienced':20}{mean(counts['experienced']):<12.1f}{median(counts['experienced']):<12.1f}\n"
+    ]
+
+    for line in text:
 
         print(line)
-
-    print()
 
     fig.show()
 
@@ -299,6 +297,8 @@ FIGS = {
 if __name__ == "__main__":
 
     t0 = time()
+
+    PARAMS["runs"] = int(argv[2])
 
     FIGS[argv[1]]()
 
