@@ -16,7 +16,7 @@ PARAMS          = {
                     "discretionary_buffer":         0,
                     "max_resets":                   3,
                     "leverage":                     1.0,
-                    "performance_post_costs":       1,
+                    "performance_post_costs":       0,
                     "trades_per_day":               5,
                     "withdrawal_frequency_days":    21,
                     "withdrawal_amount_dollars":    2000,
@@ -227,14 +227,15 @@ def fig_3():
             #( "0.60:2", "0.40:2", "naive" ), 
             #( "0.5055:2", "0.4945:2", "novice" ),
             #( "0.51425:2", "0.48575:2", "experienced" )
-            ( 0.0004,       0.000876,   "naive" ),
-            #( 0.000024375,  0.001,      "novice" ),          # $250, $6.09
-            #( 0.000064,     0.001,      "experienced"),      # $250, $16
-            ( 0.000038976,  0.001599,   "novice" ),          #  $400, $9.74
-            ( 0.00010194,   0.001599,   "experienced"),      #  $400, $25.49
+            ( 0.0004,       0.000876,   "naive", 0 ),
+            #( 0.000024375,  0.001,      "novice", 1 ),          # $250, $6.09
+            #( 0.000064,     0.001,      "experienced", 1),      # $250, $16
+            ( 0.000038976,  0.001599,   "novice", 1 ),          #  $400, $9.74
+            ( 0.00010194,   0.001599,   "experienced", 1 ),      #  $400, $25.49
         ]
-#sigma = 0.001,      $250  mu = 0.000024375, $6.09
-#sigma = 0.001599,   $400  mu = 0.000038976, $9.74
+    
+        #sigma = 0.001,      $250  mu = 0.000024375, $6.09
+        #sigma = 0.001599,   $400  mu = 0.000038976, $9.74
     
     PARAMS["runs"]          = 100
     PARAMS["max_resets"]    = 0
@@ -245,13 +246,9 @@ def fig_3():
 
     for trace in traces:
 
-        #mu, _, sigma, _     = get_rr_metric(trace[0], trace[1], 5)
-
-        mu      = trace[0]
-        sigma   = trace[1]
-
-        PARAMS["mu"]        = mu
-        PARAMS["sigma"]     = sigma
+        PARAMS["mu"]                        = trace[0]
+        PARAMS["sigma"]                     = trace[1]
+        PARAMS["performance_post_costs"]    = trace[3]
 
         runs                = sim_runs(**PARAMS)
         eval_fees           = runs["eval_fees"]
