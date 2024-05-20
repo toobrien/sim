@@ -15,10 +15,24 @@ however, achieved a Sharpe of 1.02, significantly higher than the Dax
 (t-test, p = 0.0001, two-tailed, n = 26. Figure 2)."
 
 
-sharpe 0.39 = 0.5055 +2, 0.4945 -2
-sharpe 1.02 = 0.51425 +2, 0.48575 -2
+naive (sharpe = 7.30):
 
-0.60 +2, 0.40 -2 = sharpe 7.30 
+0.60 +2, 0.40 -2, n = 5
+
+novice (sharpe = 0.39, exp = <2yrs)
+
+sigma = 0.001,      $250  mu = 0.000024375, $6.09
+sigma = 0.001599,   $400  mu = 0.000038976, $9.74
+
+0.5055 +2, 0.4945 -2, n = 5
+
+experienced (sharpe = 1.02, exp = >2yrs)
+
+sigma = 0.001,      $250  mu = 0.000064,    $16.00
+sigma = 0.001599,   $400  mu = 0.00010194,  $25.49
+
+0.51425 +2, 0.48575 -2, n = 5
+
 
 -----
 
@@ -42,6 +56,6 @@ average asian income is 10,925 USD per year
 
 args:
 
-# "{ \"risk\": \"0.60:2\", \"reward\": \"0.40:2\", \"leverage\": 1.0, \"runs\": 100, \"discretionary_buffer\": 1000, \"trades_per_day\": 5, \"withdrawal_frequency_days\": 21, \"withdrawal_amount_dollars\": 2000, \"run_years\": 1, \"eval\": 1, \"max_resets\": 3, \"show_dists\": 0, \"show_runs\": 0, \"mode\": \"tradeday_50k\" }"
 
 -----
+# "{ \"risk\": \"$400\", \"reward\": \"$25.49\", \"leverage\": 1.0, \"runs\": 100, \"performance_post_costs\": 1, \"discretionary_buffer\": 1000, \"trades_per_day\": 5, \"withdrawal_frequency_days\": 21, \"withdrawal_amount_dollars\": 2000, \"run_years\": 1, \"eval\": 1, \"max_resets\": 3, \"show_dists\": 0, \"show_runs\": 0, \"mode\": \"tradeday_50k\" }"

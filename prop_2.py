@@ -9,10 +9,10 @@ from    time                    import  time
 from    typing                  import  List, Tuple
 
 
-# python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-# python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-# python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
-# python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "0.60:2", "reward": "0.40:2", "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "performance_post_costs": 1, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "$100",   "reward": "$250",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "performance_post_costs": 1, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "0.0004", "reward": "0.01",   "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "performance_post_costs": 1, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
+# python prop_2.py '{ "risk": "1x",     "reward": "0.37x",  "leverage": 1.0, "runs": 100, "discretionary_buffer": 1000, "performance_post_costs": 1, "trades_per_day": 5, "withdrawal_frequency_days": 21, "withdrawal_amount_dollars": 2000, "run_years": 1, "eval": 1, "max_resets": 3, "show_dists": 0, "show_runs": 1, "mode": "tradeday_50k" }'
 
 
 MODES = {
@@ -108,23 +108,24 @@ ES_SHARPE_0                 = ES_MU_DAILY / ES_SIGMA_DAILY * sqrt(DPY)
 
 
 def sim_eval(
-    mu:                 float,
-    sigma:              float,
-    profit_target:      float,
-    drawdown:           float,
-    max_resets:         int,
-    min_days:           int,
-    monthly_fees:       int,
-    reset_fee:          int,
-    transaction_costs:  float,
-    trades_per_day:     int
+    mu:                     float,
+    sigma:                  float,
+    performance_post_costs: int,
+    profit_target:          float,
+    drawdown:               float,
+    max_resets:             int,
+    min_days:               int,
+    monthly_fees:           int,
+    reset_fee:              int,
+    transaction_costs:      float,
+    trades_per_day:         int
 ):
 
     count                       = 1
     fees                        = monthly_fees
     pnl                         = 0
     days                        = 0
-    transaction_costs_per_day   = transaction_costs * trades_per_day
+    transaction_costs_per_day   = transaction_costs * trades_per_day if not performance_post_costs else 0
 
     while(True):
 
@@ -162,6 +163,7 @@ def sim_runs(
     discretionary_buffer:           float,
     max_resets:                     int,
     leverage:                       float,
+    performance_post_costs:         int,
     trades_per_day:                 int,
     withdrawal_frequency_days:      int,
     withdrawal_amount_dollars:      float,
@@ -206,6 +208,7 @@ def sim_runs(
         num_evals, eval_costs   = sim_eval(
                                     mu,
                                     sigma,
+                                    performance_post_costs,
                                     eval_profit_target,
                                     eval_drawdown,
                                     max_resets,
@@ -219,7 +222,7 @@ def sim_runs(
         total_transaction_costs = 0
         run                     = array([ ES * (e**i - 1) for i in (leverage * cumsum(normal(loc = mu, scale = sigma, size = days))) ])
         costs                   = [ (transaction_costs_per_trade * trades_per_day) * i for i in range(1, len(run) + 1) ]
-        run                     = run - costs
+        run                     = run - costs if not performance_post_costs else run
         trailing_drawdown       = [ max(min(max(run[:i + 1]) - drawdown, required_buffer), -drawdown) for i in range(len(run)) ] if "personal" not in mode else [ -drawdown for _ in range(len(run))]
         running_withdrawals     = [ 0 for _ in range(len(trailing_drawdown)) ]
         profit_share            = 0
@@ -239,7 +242,6 @@ def sim_runs(
                 run                     =   run[0:j + 1]
                 run[-1]                 =   trail
                 trailing_drawdown       =   trailing_drawdown[0:j + 1]
-                
                 running_withdrawals[j]  =   withdrawn
 
                 break
@@ -304,7 +306,7 @@ def sim_runs(
     if show_runs:
 
         fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i > 0 ], marker_color = "#00FF00"), row = 1, col = 2)
-        fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i == trail ], marker_color = "#FF0000"), row = 1, col = 2)
+        fig.add_trace(go.Histogram(y = [ i for i in raw_returns if i <= 0 ], marker_color = "#FF0000"), row = 1, col = 2)
 
     failure_rate        = failed / runs
     hit_rate            = hit / runs
@@ -450,6 +452,7 @@ if __name__ == "__main__":
     leverage                    = args["leverage"]
     runs                        = args["runs"]
     run_years                   = args["run_years"]
+    performance_post_costs      = args["performance_post_costs"]
     trades_per_day              = args["trades_per_day"]
     withdrawal_frequency_days   = args["withdrawal_frequency_days"]
     withdrawal_amount_dollars   = args["withdrawal_amount_dollars"]
@@ -530,7 +533,8 @@ if __name__ == "__main__":
         sigma_bp,
         discretionary_buffer,
         max_resets,
-        leverage, 
+        leverage,
+        performance_post_costs,
         trades_per_day, 
         withdrawal_frequency_days,
         withdrawal_amount_dollars,

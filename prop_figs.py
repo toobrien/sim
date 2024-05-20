@@ -16,6 +16,7 @@ PARAMS          = {
                     "discretionary_buffer":         0,
                     "max_resets":                   3,
                     "leverage":                     1.0,
+                    "performance_post_costs":       1,
                     "trades_per_day":               5,
                     "withdrawal_frequency_days":    21,
                     "withdrawal_amount_dollars":    2000,
@@ -71,8 +72,6 @@ def print_header(title):
 
 def fig_1():
 
-    title = "p50 equity curve by day, tradeday 50k vs personal 2k, 60% +2pt, 40% -2pt, 5 trades daily, no withdrawals, 1 year, 10k runs"
-
     PARAMS["runs"]                      = 10_000
     mu, _, sigma, _                     = get_rr_metric("0.6:2", "0.4:2", 5)
     PARAMS["mu"]                        = mu
@@ -122,19 +121,27 @@ def fig_1():
     del PARAMS["show_runs"]
     del PARAMS["mode"]
 
-    PARAMS["reward"]    = "60% +2pts"
-    PARAMS["risk"]      = "40% -2pts"
+    PARAMS["reward"]                    = "60% +2pts"
+    PARAMS["risk"]                      = "40% -2pts"
+    PARAMS["performance_post_costs"]    = 0
 
-    print_header(title)
+    title = [
+        "p50 equity curve by day",
+        "tradeday 50k vs personal 2k",
+        "60% +2pt, 40% -2pt, 5 trades daily"
+        "no withdrawals"
+        "1 year",
+        "10k runs"
+    ]
 
-    fig.update_layout(title_text = title)
+    for line in title:
+
+        print(title)
 
     fig.show()
 
 
 def fig_2():
-
-    title = "percentiles, returns (total and after fees), tradeday 50k vs personal 2k, 60% +2pt, 40% -2pt, 5 trades daily, no withdrawals, 1 year, 10k runs"
 
     PARAMS["runs"]                      = 10_000
     mu, _, sigma, _                     = get_rr_metric("0.6:2", "0.4:2", 5)
@@ -192,7 +199,19 @@ def fig_2():
     PARAMS["reward"]    = "60% +2pts"
     PARAMS["risk"]      = "40% -2pts"
 
-    print_header(title)
+    title = [
+            "percentiles, returns (total and after fees)"
+            "tradeday 50k vs personal 2k",
+            "60% +2pt, 40% -2pt",
+            "5 trades daily",
+            "no withdrawals",
+            "1 year",
+            "10k runs"
+        ]
+    
+    for line in title:
+
+        print(line)
 
     fig_total.show()
     fig_after.show()
@@ -202,9 +221,6 @@ def fig_2():
 
 def fig_3():
 
-#sharpe 0.39 = 0.5055 +2, 0.4945 -2
-#sharpe 1.02 = 0.51425 +2, 0.48575 -2
-
     fig = go.Figure()
 
     traces = [ 
@@ -212,10 +228,10 @@ def fig_3():
             #( "0.5055:2", "0.4945:2", "novice" ),
             #( "0.51425:2", "0.48575:2", "experienced" )
             ( 0.0004,       0.000876,   "naive" ),
-            #( 0.000024375,  0.001,      "novice" ),          # $250 risk
-            #( 0.000064,     0.001,      "experienced"),      # $250 risk
-            ( 0.000038976,  0.001599,   "novice" ),          # $400 risk
-            ( 0.00010194,   0.001599,   "experienced"),      # $400 risk
+            #( 0.000024375,  0.001,      "novice" ),          # $250, $6.09
+            #( 0.000064,     0.001,      "experienced"),      # $250, $16
+            ( 0.000038976,  0.001599,   "novice" ),          #  $400, $9.74
+            ( 0.00010194,   0.001599,   "experienced"),      #  $400, $25.49
         ]
 #sigma = 0.001,      $250  mu = 0.000024375, $6.09
 #sigma = 0.001599,   $400  mu = 0.000038976, $9.74
