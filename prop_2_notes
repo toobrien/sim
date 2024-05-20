@@ -14,6 +14,12 @@ year traders had a negative Sharpe of -0.04. The experienced traders,
 however, achieved a Sharpe of 1.02, significantly higher than the Dax 
 (t-test, p = 0.0001, two-tailed, n = 26. Figure 2)."
 
+
+sharpe 0.39 = 0.5055 +2, 0.4945 -2
+sharpe 1.02 = 0.51425 +2, 0.48575 -2
+
+0.60 +2, 0.40 -2 = sharpe 7.30 
+
 -----
 
 https://www.zippia.com/advice/average-income-worldwide/

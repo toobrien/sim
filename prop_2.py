@@ -445,8 +445,8 @@ if __name__ == "__main__":
 
     t0                          = time()
     args                        = loads(argv[1])
-    reward                      = args["risk"]
-    risk                        = args["reward"]
+    reward                      = args["reward"]
+    risk                        = args["risk"]
     leverage                    = args["leverage"]
     runs                        = args["runs"]
     run_years                   = args["run_years"]

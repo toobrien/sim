@@ -208,11 +208,18 @@ def fig_3():
     fig = go.Figure()
 
     traces = [ 
-            ( "0.60:2", "0.40:2", "naive" ), 
-            ( "0.5055:2", "0.4945:2", "novice" ),
-            ( "0.51425:2", "0.48575:2", "experienced" )
+            #( "0.60:2", "0.40:2", "naive" ), 
+            #( "0.5055:2", "0.4945:2", "novice" ),
+            #( "0.51425:2", "0.48575:2", "experienced" )
+            ( 0.0004,       0.000876,   "naive" ),
+            #( 0.000024375,  0.001,      "novice" ),          # $250 risk
+            #( 0.000064,     0.001,      "experienced"),      # $250 risk
+            ( 0.000038976,  0.001599,   "novice" ),          # $400 risk
+            ( 0.00010194,   0.001599,   "experienced"),      # $400 risk
         ]
-
+#sigma = 0.001,      $250  mu = 0.000024375, $6.09
+#sigma = 0.001599,   $400  mu = 0.000038976, $9.74
+    
     PARAMS["runs"]          = 100
     PARAMS["max_resets"]    = 0
     
@@ -222,7 +229,10 @@ def fig_3():
 
     for trace in traces:
 
-        mu, _, sigma, _     = get_rr_metric(trace[0], trace[1], 5)
+        #mu, _, sigma, _     = get_rr_metric(trace[0], trace[1], 5)
+
+        mu      = trace[0]
+        sigma   = trace[1]
 
         PARAMS["mu"]        = mu
         PARAMS["sigma"]     = sigma
@@ -251,15 +261,17 @@ def fig_3():
                 "novice (sharpe 0.39):      50.55%      +2pt, 49.45%    -2pt",
                 "experienced (sharpe 1.02): 51.425%     +2pt, 48.575    -2pt",
                 "\n\n-----\n\n",
-                f"{'':20}{'mean':10}{'median':10}"
-                f"{'naive':20}${mean(results['naive']):<9.2f}${median(results['naive']):<9.2f}",
-                f"{'novice':20}${mean(results['novice']):<9.2f}${median(results['novice']):<9.2f}",
-                f"{'experienced':20}${mean(results['experienced']):<9.2f}${median(results['experienced']):<9.2f}"
+                f"{'':20}{'mean':20}{'median':20}",
+                f"{'naive':20}${mean(results['naive']):<19.2f}${median(results['naive']):<19.2f}",
+                f"{'novice':20}${mean(results['novice']):<19.2f}${median(results['novice']):<19.2f}",
+                f"{'experienced':20}${mean(results['experienced']):<19.2f}${median(results['experienced']):<19.2f}"
             ]
 
     for line in title:
 
         print(line)
+
+    print()
 
     fig.show()
 
