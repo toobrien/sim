@@ -276,9 +276,9 @@ def fig_4():
         "withdrawal rates:",
         "   - $3460 USD / month withdrawal (median US personal income)",
         "   - $811 USD / month withdrawal (median worldwide personal income)",
+        "novice, experienced, and naive",
         "tradeday 50k",
         "1, 5, and 10 years",
-        "novice, experienced, and naive",
         "5 trades daily",
         "2 resets, maximum",
         f"{PARAMS['runs']} runs\n"
@@ -341,7 +341,7 @@ def fig_4_plot(
 
         print(f"{profile_name:30}" + "".join([ f"{p / 256:<10.2f}" for p in day_percentiles ]))
 
-    fig.update_layout(title_text = f"{'years:':10}{int(days / 256):<10}<br>{'withdrawals:':10}${withdrawal_amount:<10.2f} per month")
+    fig.update_layout(title_text = f"{'years:':10}{int(days / 256):<10}<br>{'withdrawals:':10} ${withdrawal_amount:<10.2f} per month")
     fig.show()
 
     print("\n")
