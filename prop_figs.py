@@ -86,7 +86,7 @@ def fig_1():
         "no withdrawals",
         "2 resets maximum"
         "1 year",
-        f"{PARAMS['runs']} runs"
+        f"{PARAMS['runs']} runs\n"
     ]
 
     for line in text:
@@ -272,14 +272,16 @@ def fig_3():
 def fig_4():
 
     text = [
-        "\nsurvival rate, survival time, and after cost returns, percentiles",
-        "$3460 USD / month withdrawal (median US personal income)",
-        "$811 USD / month withdrawal (median worldwide personal income)",
+        "\nsurvival time and after cost returns, percentiles",
+        "withdrawal rates:",
+        "   - $3460 USD / month withdrawal (median US personal income)",
+        "   - $811 USD / month withdrawal (median worldwide personal income)",
         "tradeday 50k",
         "1, 5, and 10 years",
         "novice, experienced, and naive",
         "5 trades daily",
-        "2 resets, maximum\n",
+        "2 resets, maximum",
+        f"{PARAMS['runs']} runs\n"
     ]
 
     for line in text:
@@ -325,7 +327,6 @@ def fig_4_plot(
         res = sim_runs(**PARAMS)
         
         day_percentiles         = [ percentile(res['run_days'], x_) for x_ in X ]
-        survival_rate           = f"{(1 - res['failure_rate']) * 100:0.2f}%"
         _, return_after_costs   = get_total_and_after_cost_returns(res)
 
         fig.add_trace(
@@ -346,11 +347,73 @@ def fig_4_plot(
     print("\n")
 
 
+def fig_5():
+
+    text = [
+        "\nafter cost returns (differenced), percentiles",
+        "tradeday 50k, 1 mini vs. personal 2k, 1 micro",
+        "1 year",
+        "no withdrawals",
+        "novice, experienced, and naive",
+        "5 trades daily",
+        "2 resets, maximum",
+        f"{PARAMS['runs']} runs\n"
+    ]
+
+    for line in text:
+
+        print(line)
+
+    fig         = go.Figure()
+    profiles    = get_performance_profiles()
+
+    for profile in profiles:
+
+        mu                      = profile[0]
+        sigma                   = profile[1]
+        performance_post_costs  = profile[2]
+        profile_name            = profile[3]
+
+        PARAMS["mu"]                            = mu
+        PARAMS["sigma"]                         = sigma
+        PARAMS["performance_post_costs"]        = performance_post_costs
+        
+        PARAMS["leverage"]                      = 1.0
+        PARAMS["transaction_costs_per_trade"]   = 16.5
+        funded_res                              = sim_runs(**PARAMS)
+
+        PARAMS["mode"]                          = "personal_2k"
+        PARAMS["leverage"]                      = 0.1
+        PARAMS["transaction_costs_per_trade"]   = 2.45
+        personal_res                            = sim_runs(**PARAMS)
+
+        _, funded_returns   = get_total_and_after_cost_returns(funded_res)
+        _, personal_returns = get_total_and_after_cost_returns(personal_res)
+
+        funded_after_cost_percentiles   = array([ percentile(funded_returns, p) for p in X ])
+        personal_after_cost_percentiles = array([ percentile(personal_returns, p) for p in X ])
+
+        differenced_returns = funded_after_cost_percentiles - personal_after_cost_percentiles
+
+        fig.add_trace(
+            go.Scatter(
+                {
+                    "x":    X,
+                    "y":    differenced_returns,
+                    "name": profile_name
+                }
+            )
+        )
+
+    fig.show()
+
+
 FIGS = {
     "fig_1":    fig_1,
     "fig_2":    fig_2,
     "fig_3":    fig_3,
-    "fig_4":    fig_4
+    "fig_4":    fig_4,
+    "fig_5":    fig_5
 }
 
 
