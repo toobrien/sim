@@ -213,45 +213,31 @@ def fig_3():
 
     fig = go.Figure()
 
-    traces = [ 
-            #( "0.60:2", "0.40:2", "naive" ), 
-            #( "0.5055:2", "0.4945:2", "novice" ),
-            #( "0.51425:2", "0.48575:2", "experienced" )
-            ( 0.0004,       0.000876,   "naive", 0 ),
-            #( 0.000024375,  0.001,      "novice", 1 ),          # $250, $6.09
-            #( 0.000064,     0.001,      "experienced", 1),      # $250, $16
-            ( 0.000038976,  0.001599,   "novice", 1 ),          #  $400, $9.74
-            ( 0.00010194,   0.001599,   "experienced", 1 ),      #  $400, $25.49
-        ]
-    
-        #sigma = 0.001,      $250  mu = 0.000024375, $6.09
-        #sigma = 0.001599,   $400  mu = 0.000038976, $9.74
-    
-
+    profiles                = get_performance_profiles()
     counts                  = {}
-    PARAMS["runs"]          = 10_000
     
     x = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
 
     results = {}
 
-    for trace in traces:
+    for profile in profiles:
 
-        PARAMS["mu"]                        = trace[0]
-        PARAMS["sigma"]                     = trace[1]
-        PARAMS["performance_post_costs"]    = trace[3]
+        PARAMS["mu"]                        = profile[0]
+        PARAMS["sigma"]                     = profile[1]
+        PARAMS["performance_post_costs"]    = profile[2]
 
-        runs                = sim_runs(**PARAMS)
-        eval_fees           = runs["eval_fees"]
-        counts[trace[2]]    = runs["eval_counts"]
-        results[trace[2]]   = eval_fees
+        profile_name            = profile[3]
+        runs                    = sim_runs(**PARAMS)
+        eval_fees               = runs["eval_fees"]
+        counts[profile_name]    = runs["eval_counts"]
+        results[profile_name]   = eval_fees
 
         fig.add_trace(
             go.Scatter(
                 {
                     "x":    x,
                     "y":    [ percentile(eval_fees, x_) for x_ in x ],
-                    "name": trace[2]
+                    "name": profile_name
                 }
             )
         )
