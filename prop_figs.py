@@ -352,9 +352,9 @@ def fig_5():
     text = [
         "\nafter cost returns (differenced), percentiles",
         "tradeday 50k, 1 mini vs. personal 2k, 1 micro",
+        "novice, experienced, and naive",
         "1 year",
         "no withdrawals",
-        "novice, experienced, and naive",
         "5 trades daily",
         "2 resets, maximum",
         f"{PARAMS['runs']} runs\n"
