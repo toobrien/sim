@@ -7,6 +7,7 @@ from    time                    import  time
 
 PERSONAL_COLOR  = "#0000FF"
 FUNDED_COLOR    = "#FF00FF"
+X               = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
 PARAMS          = {
                     "runs":                         100, 
                     "days":                         256,
@@ -76,11 +77,11 @@ def v_percentile(x: array, p: float):
 def fig_1():
 
     text = [
-        "median equity curve by day",
+        "\nmedian equity curve by day",
         "tradeday 50k vs personal 2k",
-        "naive:         sharpe = 7.30, reward = 60% +2pt, risk = 40% -2pt",
-        "novice:        sharpe = 0.39, reward = $9.74,    risk = $400,",
-        "experienced:   sharpe = 1.02, reward = $25.49,   risk = $400",
+        "novice:        sharpe = 0.39, reward = $9.74,  risk = $400,",
+        "experienced:   sharpe = 1.02, reward = $25.49, risk = $400",
+        "naive:         sharpe = 7.30, reward = $100,   risk = $219.09",
         "5 trades per day",
         "no withdrawals",
         "2 resets maximum"
@@ -144,10 +145,11 @@ def fig_1_plot(mu: float, sigma: float, performance_post_costs: int, profile: st
 def fig_2():
 
     text = [
-            "percentiles, returns (total and after fees)"
+            "\npercentiles, returns (total and after fees)"
             "tradeday 50k vs personal 2k",
-            "60% win rate, 2pt risk and reward, 5 trades daily",
-            "0 withdrawals",
+            "novice, experienced, and naive",
+            "5 trades daily",
+            "no withdrawals",
             "1 year",
             "2 resets, maximum",
             f"{PARAMS['runs']} runs\n"
@@ -176,14 +178,11 @@ def fig_2_plot(mu: float, sigma: float, performance_post_costs: int, profile: st
 
     funded_total_returns, funded_after_cost_returns     = get_total_and_after_cost_returns(funded_runs)
     personal_total_returns, personal_after_cost_returns = get_total_and_after_cost_returns(personal_runs)
-
-
-    x = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
     
-    funded_total_y      = [ percentile(funded_total_returns, x_) for x_ in x ]
-    funded_after_y      = [ percentile(funded_after_cost_returns, x_) for x_ in x ]
-    personal_total_y    = [ percentile(personal_total_returns, x_) for x_ in x ]
-    personal_after_y    = [ percentile(personal_after_cost_returns, x_) for x_ in x ]
+    funded_total_y      = [ percentile(funded_total_returns, x_) for x_ in X ]
+    funded_after_y      = [ percentile(funded_after_cost_returns, x_) for x_ in X ]
+    personal_total_y    = [ percentile(personal_total_returns, x_) for x_ in X ]
+    personal_after_y    = [ percentile(personal_after_cost_returns, x_) for x_ in X ]
 
     traces = [
         ( funded_total_y,   f"{profile} tradeday total returns",       FUNDED_COLOR,   0.3 ),
@@ -197,7 +196,7 @@ def fig_2_plot(mu: float, sigma: float, performance_post_costs: int, profile: st
         fig.add_trace(
             go.Scatter(
                 {
-                    "x":        x,
+                    "x":        X,
                     "y":        trace[0],
                     "name":     trace[1],
                     "marker":   { "color": trace[2] },
@@ -215,10 +214,7 @@ def fig_3():
 
     profiles                = get_performance_profiles()
     counts                  = {}
-    
-    x = [ 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 ]
-
-    results = {}
+    results                 = {}
 
     for profile in profiles:
 
@@ -235,8 +231,8 @@ def fig_3():
         fig.add_trace(
             go.Scatter(
                 {
-                    "x":    x,
-                    "y":    [ percentile(eval_fees, x_) for x_ in x ],
+                    "x":    X,
+                    "y":    [ percentile(eval_fees, x_) for x_ in X ],
                     "name": profile_name
                 }
             )
@@ -250,20 +246,20 @@ def fig_3():
         f"{PARAMS['runs']} runs",
         "\n-----\n",
         f"{'':20}{'sharpe':12}{'win rate':12}{'risk':12}{'reward':12}\n",
-        f"{'naive':20}{7.30:<12.2f}{'60%':12}{'2 points':12}{'2 points':12}",
         f"{'novice (<2yr)':20}{0.39:<12.2f}{'50.55%':12}{'$400':12}{'$9.74':12}",
         f"{'experienced (>2yr)':20}{1.02:<12.2f}{'51.425%':12}{'$400':12}{'$25.49':12}",
+        f"{'naive':20}{7.30:<12.2f}{'60%':12}{'$100':12}{'$219.09':12}\n",
         "\n-----\n",
         f"{'':20}{'mean':12}{'median':12}\n",
-        f"{'naive':20}${mean(results['naive']):<11.2f}${median(results['naive']):<11.2f}",
         f"{'novice':20}${mean(results['novice']):<11.2f}${median(results['novice']):<11.2f}",
-        f"{'experienced':20}${mean(results['experienced']):<11.2f}${median(results['experienced']):<11.2f}\n"
+        f"{'experienced':20}${mean(results['experienced']):<11.2f}${median(results['experienced']):<11.2f}",
+        f"{'naive':20}${mean(results['naive']):<11.2f}${median(results['naive']):<11.2f}\n",
         "\n-----\n",
         "evals per pass\n",
         f"{'':20}{'mean':12}{'median':12}",
-        f"{'naive':20}{mean(counts['naive']):<12.1f}{median(counts['naive']):<12.1f}",
         f"{'novice':20}{mean(counts['novice']):<12.1f}{median(counts['novice']):<12.1f}",
-        f"{'experienced':20}{mean(counts['experienced']):<12.1f}{median(counts['experienced']):<12.1f}\n"
+        f"{'experienced':20}{mean(counts['experienced']):<12.1f}{median(counts['experienced']):<12.1f}",
+        f"{'naive':20}{mean(counts['naive']):<12.1f}{median(counts['naive']):<12.1f}\n"
     ]
 
     for line in text:
@@ -273,10 +269,88 @@ def fig_3():
     fig.show()
 
 
+def fig_4():
+
+    text = [
+        "\nsurvival rate, survival time, and after cost returns, percentiles",
+        "$3460 USD / month withdrawal (median US personal income)",
+        "$811 USD / month withdrawal (median worldwide personal income)",
+        "tradeday 50k",
+        "1, 5, and 10 years",
+        "novice, experienced, and naive",
+        "5 trades daily",
+        "2 resets, maximum\n",
+    ]
+
+    for line in text:
+
+        print(line)
+
+    PARAMS["withdrawal_frequency_days"] = 21
+    profiles                            = get_performance_profiles()
+    lengths                             = [ 1, 5, 10 ]
+    amounts                             = [ 811, 3460 ]
+
+    for years in lengths:
+
+        for amount in amounts:
+
+            fig_4_plot(profiles, years * 256, amount)
+
+
+def fig_4_plot(
+    profiles:           tuple,
+    days:               int,
+    withdrawal_amount:  int,
+):
+
+    fig             = go.Figure()
+    header_title    = f"{str(int(days / 256)) + ' years, $' + str(withdrawal_amount) + ' withdrawals'}"
+
+    print("\n", f"{header_title:30}" + "".join([ f"{str(x_) + '%':10}" for x_ in X ]), "\n")
+
+    for profile in profiles:
+
+        mu                      = profile[0]
+        sigma                   = profile[1]
+        performance_post_costs  = profile[2]
+        profile_name            = profile[3]
+
+        PARAMS["mu"]                        = mu
+        PARAMS["sigma"]                     = sigma
+        PARAMS["performance_post_costs"]    = performance_post_costs
+        PARAMS["days"]                      = days
+        PARAMS["withdrawal_amount_dollars"] = withdrawal_amount
+        
+        res = sim_runs(**PARAMS)
+        
+        day_percentiles         = [ percentile(res['run_days'], x_) for x_ in X ]
+        survival_rate           = f"{(1 - res['failure_rate']) * 100:0.2f}%"
+        _, return_after_costs   = get_total_and_after_cost_returns(res)
+
+        fig.add_trace(
+            go.Scatter(
+                {
+                    "x":    X,
+                    "y":    [ percentile(return_after_costs, x_) for x_ in X ],
+                    "name": profile_name
+                }
+            )
+        )
+
+        print(f"{profile_name:30}" + "".join([ f"{p / 256:<10.2f}" for p in day_percentiles ]))
+
+    fig.update_layout(title_text = f"{'years:':10}{int(days / 256):<10}<br>{'withdrawals:':10}${withdrawal_amount:<10.2f} per month")
+    fig.show()
+
+    print("\n")
+
+
 FIGS = {
     "fig_1":    fig_1,
     "fig_2":    fig_2,
-    "fig_3":    fig_3
+    "fig_3":    fig_3,
+    "fig_4":    fig_4
 }
 
 
