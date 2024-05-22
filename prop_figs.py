@@ -326,8 +326,9 @@ def fig_4_plot(
         
         res = sim_runs(**PARAMS)
         
-        day_percentiles         = [ percentile(res['run_days'], x_) for x_ in X ]
+        day_percentiles         = [ percentile(res['run_days'], p) for p in X ]
         _, return_after_costs   = get_total_and_after_cost_returns(res)
+        cost_percentiles        = [ percentile(return_after_costs, p) for p in X ]
 
         fig.add_trace(
             go.Scatter(
@@ -339,9 +340,10 @@ def fig_4_plot(
             )
         )
 
-        print(f"{profile_name:30}" + "".join([ f"{p / 256:<10.2f}" for p in day_percentiles ]))
+        print(f"{profile_name:15}{'(years)':15}" + "".join([ f"{p / 256:<10.2f}" for p in day_percentiles ]))
+        print(f"{profile_name:15}{'(return)':15}" + "".join([ f"{p:<10.2f}" for p in cost_percentiles ]))
 
-    fig.update_layout(title_text = f"{'years:':10}{int(days / 256):<10}<br>{'withdrawals:':10} ${withdrawal_amount:<10.2f} per month")
+    fig.update_layout(title_text = f"{'years:':15}{int(days / 256):<10}<br>{'withdrawals:':15} ${withdrawal_amount:<10.2f} per month")
     fig.show()
 
     print("\n")
