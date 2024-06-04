@@ -39,6 +39,7 @@ if __name__ == "__main__":
                 {
                     "x":        x,
                     "y":        y_,
+                    "mode":     "markers",
                     "marker":   { "color": "#0000FF" },
                     "name":     f"signal: {w_signal:0.2f}  noise: {w_noise:0.2f}"
                 }
