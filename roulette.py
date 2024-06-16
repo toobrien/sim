@@ -69,19 +69,19 @@ if __name__ == "__main__":
     worst_result    = min(ending_pnls)
     percent_winners = mean([ 1 if pnl > 0 else 0 for pnl in ending_pnls ]) * 100
 
-    print(f"\ninitial bankroll:               $250\n")
+    print(f"\ninitial bankroll:                 ${init}")
+    print(f"risk free rate:                    {rfr:0.2f}")
+    print(f"games per player, per year:        {n_plays}")
+    print(f"number of players:                 {n_players}\n")
     
-    print(f"theoretical expected return:    ${mu_t:<10.2f}{mu_t / init * 100:>10.2f}%")
-    print(f"theoretical standard deviation: ${sigma_t:<10.2f}{sigma_t / init * 100:>10.2f}%")
-    print(f"theoretical sharpe ratio:        {sharpe_t:<10.2f}\n")
+    print(f"theoretical expected return:      ${mu_t:<10.2f}{mu_t / init * 100:>10.2f}%")
+    print(f"theoretical standard deviation:   ${sigma_t:<10.2f}{sigma_t / init * 100:>10.2f}%")
+    print(f"theoretical sharpe ratio:          {sharpe_t:<10.2f}\n")
 
-    print(f"observed expected return:       ${mu_o:<10.2f}{mu_o / init * 100:>10.2f}%")
-    print(f"observed standard deviation:    ${sigma_o:<10.2f}{sigma_t / init * 100:>10.2f}%")
-    print(f"observed sharpe ratio:           {sharpe_o:<10.2f}\n")
+    print(f"observed expected return:         ${mu_o:<10.2f}{mu_o / init * 100:>10.2f}%")
+    print(f"observed standard deviation:      ${sigma_o:<10.2f}{sigma_t / init * 100:>10.2f}%")
+    print(f"observed sharpe ratio:             {sharpe_o:<10.2f}\n")
     
-    print(f"percent_winners:                 {percent_winners:<10.2f}")
-    print(f"biggest winner:                 ${best_result:<10.2f}{best_result / init * 100:>10.2f}%")
-    print(f"biggest loser:                  ${worst_result:<10.2f}{worst_result / init * 100:>10.2f}\n%")
-    
-
-    pass
+    print(f"percent_winners:                   {percent_winners:<10.2f}")
+    print(f"biggest winner:                   ${best_result:<10.2f}{best_result / init * 100:>10.2f}%")
+    print(f"biggest loser:                    ${worst_result:<10.2f}{worst_result / init * 100:>10.2f}%\n")
