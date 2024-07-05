@@ -5,10 +5,6 @@ from    random                  import  choices
 from    sys                     import  argv
 
 
-# eval pass_rate:   30.86%
-# pa pass_rate:     36.40%
-
-
 EVAL_COST = 34
 
 
