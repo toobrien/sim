@@ -13,7 +13,7 @@ from    utils.dbn_util          import  strptime
 
 # python rcandle_generic.py NQ.c.0_ohlcv-1m 10 06:30 13:00 5 1000
 
-
+DOF     = 4
 DEBUG   = True
 DT_FMT  = "%Y-%m-%dT%H:%M:%S"
 MODE    = "abs"
@@ -75,14 +75,13 @@ def run(
                     ( "#00FF00", "#FF0000" ),
                     ( "#FFFFFF", "#0000FF" )
                 ]
-    titles      = [ "R", "B" ]
     answers     = []
     i           = 0
     dates       = sorted(list(df["date"].unique()))
 
     if max_days_back:
 
-        days = dates[-max_days_back:]
+        dates = dates[-max_days_back:]
 
     while i < n:
 
@@ -94,6 +93,7 @@ def run(
                     (col("time") <= end)
                 )
         
+        X       = list(day["time"])
         o       = list(day["open"])
         h       = list(day["high"])
         l       = list(day["low"])
@@ -114,7 +114,7 @@ def run(
         agg     = 60 * interval
         sigma   = std(y) * sqrt(1 / agg)
         count   = (len(c) + 1) * agg
-        y       = list(cumsum(t.rvs(5, loc = mu, scale = sigma, size = count)))
+        y       = list(cumsum(t.rvs(DOF, loc = mu, scale = sigma, size = count)))
         
         o_n     = []
         h_n     = []
