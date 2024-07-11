@@ -80,8 +80,8 @@ if __name__ == "__main__":
         sigma   = std(y) * sqrt(1 / 60)
         count   = (len(c) + 1) * 60
         #y      = get_walk("normal", { "loc": mu, "scale": sigma, "size": count })
-        #y      = get_walk("t", { "degrees": 2.75, "loc": mu, "scale": sigma, "size": count })
-        y       = get_walk("jump", { "length": count, "sigma": 0.00002, "jump_scale": 3, "decay": 0.9, "max_shocks": 50, "mu": mu })
+        y       = get_walk("t", { "degrees": 2.75, "loc": mu, "scale": sigma, "size": count })
+        #y      = get_walk("jump", { "length": count, "sigma": 0.00002, "jump_scale": 3, "decay": 0.9, "max_shocks": 50, "mu": mu })
 
         o_n     = []
         h_n     = []
