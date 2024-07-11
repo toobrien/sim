@@ -1,4 +1,4 @@
-from    math                    import  log, sqrt
+from    math                    import  e, log, sqrt
 from    numpy                   import  cumsum, std
 from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
@@ -11,7 +11,7 @@ from    time                    import  time
 from    utils.dbn_util          import  strptime
 
 
-# python rcandle_generic.py NQ.c.0_ohlcv-1m 10 06:30 13:00 5
+# python rcandle_generic.py NQ.c.0_ohlcv-1m 10 06:30 13:00 5 1000
 
 
 DEBUG   = True
@@ -52,11 +52,12 @@ def resample(
 
 
 def run(
-    df:         DataFrame, 
-    n:          int,
-    start:      str,
-    end:        str,
-    interval:   int
+    df:             DataFrame, 
+    n:              int,
+    start:          str,
+    end:            str,
+    interval:       int,
+    max_days_back:  int
 ):
 
     fig         = make_subplots(
@@ -75,8 +76,12 @@ def run(
                 ]
     titles      = [ "R", "B" ]
     answers     = []
-    dates       = sorted(list(df["date"].unique()))
     i           = 0
+    dates       = sorted(list(df["date"].unique()))
+
+    if max_days_back:
+
+        days = dates[-max_days_back:]
 
     while i < n:
 
@@ -108,7 +113,7 @@ def run(
         agg     = 60 * interval
         sigma   = std(y) * sqrt(1 / agg)
         count   = (len(c) + 1) * agg
-        y       = list(cumsum(t.rvs(2.5, loc = mu, scale = sigma, size = count)))
+        y       = list(cumsum(t.rvs(2.75, loc = mu, scale = sigma, size = count)))
         
         o_n     = []
         h_n     = []
@@ -140,20 +145,20 @@ def run(
         if noise:
 
             trace = ( 
-                    o_n,
-                    h_n,
-                    l_n,
-                    c_n 
+                    [ open_ * (e**(x) - 1) for x in o_n ],
+                    [ open_ * (e**(x) - 1) for x in h_n ],
+                    [ open_ * (e**(x) - 1) for x in l_n ],
+                    [ open_ * (e**(x) - 1) for x in c_n ]
                 ) 
         
         else: 
         
             trace = (
-                o_s,
-                h_s,
-                l_s,
-                c_s 
-            )
+                    [ open_ * (e**(x) - 1) for x in o_s ],
+                    [ open_ * (e**(x) - 1) for x in h_s ],
+                    [ open_ * (e**(x) - 1) for x in l_s ],
+                    [ open_ * (e**(x) - 1) for x in c_s ]
+                )
 
         answers.append(answer)
 
@@ -194,14 +199,15 @@ def run(
 
 if __name__ == "__main__":
 
-    t0          = time()
-    df          = read_csv(f"../databento/csvs/{argv[1]}.csv")
-    df          = strptime(df, "ts_event", "ts_event", DT_FMT, "America/Los_Angeles").sort("ts_event")
-    df          = df.with_columns(col("ts_event").str.strptime(Datetime, DT_FMT).alias("ts_event"))
-    n           = int(argv[2])
-    start       = argv[3]
-    end         = argv[4]
-    interval    = 1
+    t0              = time()
+    df              = read_csv(f"../databento/csvs/{argv[1]}.csv")
+    df              = strptime(df, "ts_event", "ts_event", DT_FMT, "America/Los_Angeles").sort("ts_event")
+    df              = df.with_columns(col("ts_event").str.strptime(Datetime, DT_FMT).alias("ts_event"))
+    n               = int(argv[2])
+    start           = argv[3]
+    end             = argv[4]
+    interval        = 1
+    max_days_back   = None
 
     #print(df.tail(n = 10))
 
@@ -213,6 +219,10 @@ if __name__ == "__main__":
 
         #print(df.tail(n = 10))
 
-    run(df, n, start, end, interval) 
+    if len(argv) > 5:
+
+        max_days_back = int(argv[5])
+
+    run(df, n, start, end, interval, max_days_back)
 
     print(f"{time() - t0:0.1f}s")
