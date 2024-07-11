@@ -78,6 +78,7 @@ def run(
     answers     = []
     i           = 0
     dates       = sorted(list(df["date"].unique()))
+    n_rows      = 0
 
     if max_days_back:
 
@@ -101,6 +102,16 @@ def run(
 
         if not o:
 
+            continue
+
+        if n_rows == 0:
+
+            n_rows = day.shape[0]
+        
+        elif day.shape[0] != n_rows:
+
+            # ensure all days are the same length
+            
             continue
 
         open_   = o[0]
