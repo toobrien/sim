@@ -16,6 +16,7 @@ from    utils.dbn_util          import  strptime
 
 DEBUG   = True
 DT_FMT  = "%Y-%m-%dT%H:%M:%S"
+MODE    = "abs"
 
 Config.set_tbl_cols(-1)
 Config.set_tbl_rows(-1)
@@ -113,7 +114,7 @@ def run(
         agg     = 60 * interval
         sigma   = std(y) * sqrt(1 / agg)
         count   = (len(c) + 1) * agg
-        y       = list(cumsum(t.rvs(2.75, loc = mu, scale = sigma, size = count)))
+        y       = list(cumsum(t.rvs(5, loc = mu, scale = sigma, size = count)))
         
         o_n     = []
         h_n     = []
@@ -141,24 +142,14 @@ def run(
         answer  = f"{i + 1}\t{'N' if noise else 'S'}"
         scheme  = colors[0]
         title   = i
+        trace   = [ o_n, h_n, l_n, c_n ] if noise else [ o_s, h_s, l_s, c_s ]
 
-        if noise:
+        if MODE == "abs":
 
-            trace = ( 
-                    [ open_ * (e**(x) - 1) for x in o_n ],
-                    [ open_ * (e**(x) - 1) for x in h_n ],
-                    [ open_ * (e**(x) - 1) for x in l_n ],
-                    [ open_ * (e**(x) - 1) for x in c_n ]
-                ) 
-        
-        else: 
-        
-            trace = (
-                    [ open_ * (e**(x) - 1) for x in o_s ],
-                    [ open_ * (e**(x) - 1) for x in h_s ],
-                    [ open_ * (e**(x) - 1) for x in l_s ],
-                    [ open_ * (e**(x) - 1) for x in c_s ]
-                )
+            trace = [
+                [ open_ * (e**(x) - 1) for x in trace[i] ]
+                for i in range(len(trace))
+            ]
 
         answers.append(answer)
 
