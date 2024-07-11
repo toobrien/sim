@@ -14,7 +14,8 @@ from    utils.dbn_util          import  strptime
 # python rcandle_generic.py NQ.c.0_ohlcv-1m 10 06:30 13:00 5
 
 
-DT_FMT = "%Y-%m-%dT%H:%M:%S"
+DEBUG   = True
+DT_FMT  = "%Y-%m-%dT%H:%M:%S"
 
 Config.set_tbl_cols(-1)
 Config.set_tbl_rows(-1)
@@ -58,9 +59,26 @@ def run(
     interval:   int
 ):
 
-    dates = sorted(list(df["date"].unique()))
+    fig         = make_subplots(
+                    rows                = n,
+                    cols                = 1,
+                    subplot_titles      = tuple( x + 1 for x in range(n) ),
+                    vertical_spacing    = 0.005
+                )
+    fig.update_layout(
+        autosize    = True,
+        height      = n * 800
+    )
+    colors      = [
+                    ( "#00FF00", "#FF0000" ),
+                    ( "#FFFFFF", "#0000FF" )
+                ]
+    titles      = [ "R", "B" ]
+    answers     = []
+    dates       = sorted(list(df["date"].unique()))
+    i           = 0
 
-    for i in range(n):
+    while i < n:
 
         j       = randint(0, len(dates) - 1)
         date    = dates[j]
@@ -75,10 +93,15 @@ def run(
         l       = list(day["low"])
         c       = list(day["close"])
 
-        o_s     = [ log(o[j] / o[0]) for j in range(1, len(o)) ]
-        h_s     = [ log(h[j] / o[0]) for j in range(1, len(h)) ]
-        l_s     = [ log(l[j] / o[0]) for j in range(1, len(l)) ]
-        c_s     = [ log(c[j] / o[0]) for j in range(1, len(c)) ]
+        if not o:
+
+            continue
+
+        open_   = o[0]
+        o_s     = [ log(o[j] / open_) for j in range(1, len(o)) ]
+        h_s     = [ log(h[j] / open_) for j in range(1, len(h)) ]
+        l_s     = [ log(l[j] / open_) for j in range(1, len(l)) ]
+        c_s     = [ log(c[j] / open_) for j in range(1, len(c)) ]
 
         y       = [ log(c[j] / c[j - 1]) for j in range(1, len(c)) ]
         mu      = 0
@@ -109,7 +132,62 @@ def run(
 
             prev_k = k
         
-        pass
+        noise   = randint(0, 1)
+        answer  = f"{i + 1}\t{'N' if noise else 'S'}"
+        scheme  = colors[0]
+        title   = i
+
+        if noise:
+
+            trace = ( 
+                    o_n,
+                    h_n,
+                    l_n,
+                    c_n 
+                ) 
+        
+        else: 
+        
+            trace = (
+                o_s,
+                h_s,
+                l_s,
+                c_s 
+            )
+
+        answers.append(answer)
+
+        fig.add_trace(
+            go.Candlestick(
+                {
+                    "x":        [ j for j in range(len(trace[0])) ],
+                    "open":     trace[0],
+                    "high":     trace[1],
+                    "low":      trace[2],
+                    "close":    trace[3],
+                    "name":     title,
+                    "increasing_line_color": scheme[0],
+                    "decreasing_line_color": scheme[1]
+                }
+            ),
+            row = i + 1,
+            col = 1
+        )
+
+        i += 1
+
+    if DEBUG:
+    
+        for i in range(n):
+
+            fig.layout.annotations[i].update(text = answers[i])
+
+    fig.update_xaxes(rangeslider_visible = False)
+    fig.show()
+
+    for answer in answers:
+
+        print(answer)
 
     pass
 
@@ -137,4 +215,4 @@ if __name__ == "__main__":
 
     run(df, n, start, end, interval) 
 
-    print(f"{t0 - time():0.1f}s")
+    print(f"{time() - t0:0.1f}s")
