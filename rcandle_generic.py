@@ -14,7 +14,7 @@ from    utils.dbn_util          import  strptime
 # python rcandle_generic.py NQ.c.0_ohlcv-1m 10 06:30 13:00 5 1000
 
 DOF     = 4
-DEBUG   = True
+DEBUG   = False
 DT_FMT  = "%Y-%m-%dT%H:%M:%S"
 MODE    = "abs"
 
@@ -76,6 +76,7 @@ def run(
                     ( "#FFFFFF", "#0000FF" )
                 ]
     answers     = []
+    seen        = []
     i           = 0
     dates       = sorted(list(df["date"].unique()))
     n_rows      = 0
@@ -86,7 +87,16 @@ def run(
 
     while i < n:
 
-        j       = randint(0, len(dates) - 1)
+        j = randint(0, len(dates) - 1)
+
+        if j in seen:
+
+            continue
+        
+        else:
+
+            seen.append(j)
+
         date    = dates[j]
         day     = df.filter(
                     (col("date") == date) &

@@ -2,21 +2,28 @@ from numpy                  import mean, std
 from polars                 import read_csv
 from plotly.graph_objects   import Figure, Histogram
 from random                 import randint
+from sys                    import argv
 from time                   import time
+
+
+# python shawnism.py 6E.c.0_ohlcv-1m 0.0005
 
 
 if __name__ == "__main__":
 
     t0          = time()
-    eurusd      = read_csv("../databento/csvs/6E.c.0_ohlcv-1m.csv")
-    o           = list(eurusd["open"])
-    h           = list(eurusd["high"])
-    l           = list(eurusd["low"])
-    h           = list(eurusd["close"])
+    fn          = argv[1]
+    df          = read_csv(f"../databento/csvs/{fn}.csv")
+    o           = list(df["open"])
+    h           = list(df["high"])
+    l           = list(df["low"])
+    ts          = list(df["ts_event"])
+    start       = ts[0].split("T")[0]
+    end         = ts[-1].split("T")[0]
     n_obs       = len(o) - 1000
-    n_trades    = 1_000
+    n_trades    = 100
     n_samples   = 10_000
-    limit       = 0.0005
+    limit       = float(argv[2])
     results     = []
 
     for i in range(n_samples):
@@ -52,11 +59,12 @@ if __name__ == "__main__":
 
     fig = Figure()
 
-    fig.add_trace(Histogram(x = results, name = f"trades: {n_trades}<br>samples: {n_samples}<br>tp, sl = {limit}"))
-    fig.add_vline(x = n_trades / 2, line_color = "#FF00FF")
+    fig.add_trace(Histogram(x = results))
+    fig.add_vline(x = 0.5, line_color = "#FF00FF")
 
     fig.show()
 
-    print(f"mean:  {mean(results):0.2f}")
-    print(f"stdev: {std(results):0.2f}")
+    print(f"period:  {start} - {end}")
+    print(f"mean:    {mean(results):0.2f}")
+    print(f"stdev:   {std(results):0.2f}")
     print(f"\n{time() - t0:0.2f}s")
