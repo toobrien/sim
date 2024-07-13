@@ -60,5 +60,3 @@ if __name__ == "__main__":
     print(f"mean:  {mean(results):0.2f}")
     print(f"stdev: {std(results):0.2f}")
     print(f"\n{time() - t0:0.2f}s")
-
-    pass
