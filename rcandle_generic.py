@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     if len(argv) > 5:
 
-        max_days_back = int(argv[5])
+        max_days_back = int(argv[6])
 
     run(df, n, start, end, interval, max_days_back)
 
