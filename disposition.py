@@ -13,12 +13,12 @@ if __name__ == "__main__":
     max_loss    = 20
     risks       = [ i for i in range(1, max_loss + 1) ]
 
-    print(f"\nnum traders:    {n_traders}")
-    print(f"cost per trade: {costs:0.2f}")
-    print(f"num trades:     {n_trades}")
-    print(f"max loss:       {max_loss}\n")
+    print(f"\nnum traders:        {n_traders}")
+    print(f"cost per trade:     {costs:0.2f}")
+    print(f"num trades:         {n_trades}")
+    print(f"max loss:           {max_loss}\n")
 
-    print(f"{'reward:risk':20}{'survival rate':20}{'avg trades survived'}\n")
+    print(f"{'reward:risk':20}{'survival rate (%)':20}{'avg trades survived'}\n")
 
     for r in risks:
 
@@ -42,6 +42,6 @@ if __name__ == "__main__":
                 results.append(1)
 
 
-        print(f"{f'1:{r}':20}{mean(results):<20.2f}{mean(lens):<20.1f}")
+        print(f"{f'1:{r}':20}{mean(results) * 100:<20.2f}{mean(lens):<20.1f}")
             
 
