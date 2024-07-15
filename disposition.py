@@ -1,13 +1,12 @@
 from bisect import bisect_left
-from numpy  import cumsum, mean
+from numpy  import cumsum, mean, where
 from random import choices
 from sys    import argv
 
 
 if __name__ == "__main__":
 
-    add_costs   = int(argv[1])
-    costs       = 0.33 if add_costs else 0
+    costs       = float(argv[1])
     n_traders   = 10_000
     n_trades    = 1_000
     max_loss    = 20
@@ -22,6 +21,8 @@ if __name__ == "__main__":
 
     for r in risks:
 
+        w       = 1 - costs
+        l       = -r - costs
         p_w     = r / (1 + r)
         p_l     = 1 - p_w
         results = []
@@ -29,11 +30,12 @@ if __name__ == "__main__":
 
         for i in range(n_traders):        
             
-            sample = cumsum(choices([ 1 - costs, -r - costs ], [ p_w, p_l], k = n_trades))
+            sample  = cumsum(choices([ w, l ], [ p_w, p_l ], k = n_trades))
+            locs    = where(sample <= -max_loss)[0]
 
-            if min(sample) <= -max_loss:
+            if len(locs) > 0:
 
-                lens.append(bisect_left(sample, -max_loss))
+                lens.append(locs[0])
                 results.append(0)
 
             else:
@@ -43,5 +45,7 @@ if __name__ == "__main__":
 
 
         print(f"{f'1:{r}':20}{mean(results) * 100:<20.2f}{mean(lens):<20.1f}")
+
+    print("\n")
             
 
