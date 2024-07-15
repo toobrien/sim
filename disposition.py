@@ -4,12 +4,15 @@ from random import choices
 from sys    import argv
 
 
+# python disposition.py 0 20
+
+
 if __name__ == "__main__":
 
     costs       = float(argv[1])
     n_traders   = 10_000
     n_trades    = 1_000
-    max_loss    = 20
+    max_loss    = int(argv[2])
     risks       = [ i for i in range(1, max_loss + 1) ]
 
     print(f"\nnum traders:        {n_traders}")
