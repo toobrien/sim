@@ -1,14 +1,16 @@
 import  plotly.graph_objects    as      go
 from    math                    import  sqrt
-from    random                  import  choices
 from    scipy.stats             import  binom
+from    sys                     import  argv
 
+
+# python binom_ex.py 1 1 100
 
 if __name__ == "__main__":
 
-    n       = 100 # number of trades
-    risk    = 1
-    reward  = 1
+    reward  = int(argv[1])
+    risk    = int(argv[2])
+    n       = int(argv[3]) # number of trades
     p_win   = risk / (risk + reward)
 
     mu      = n * p_win
