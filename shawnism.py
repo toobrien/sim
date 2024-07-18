@@ -1,4 +1,5 @@
-from numpy                  import mean, std
+from math                   import sqrt
+from numpy                  import mean, std, histogram
 from polars                 import read_csv
 from plotly.graph_objects   import Figure, Histogram, Scatter
 from random                 import randint
@@ -65,9 +66,14 @@ if __name__ == "__main__":
     fig.add_trace(Histogram(x = results, histnorm = "probability density"))
     fig.add_vline(x = 50, line_color = "#FF00FF")
 
+    counts, bins    = histogram(results, bins = range(0, 100, 1))
+    counts          = counts / n_samples
+    error           = sqrt(sum([ (theo_p[i] - counts[i])**2 for i in range(len(counts)) ]))
+
     fig.show()
 
     print(f"period:  {start} - {end}")
     print(f"mean:    {mean(results):0.2f}")
     print(f"stdev:   {std(results):0.2f}")
+    print(f"error:   {error:0.2f}")
     print(f"\n{time() - t0:0.2f}s")
