@@ -14,7 +14,7 @@ if __name__ == "__main__":
     p_win   = risk / (risk + reward)
 
     mu      = n * p_win
-    sigma   = n * p_win * (1 - p_win)
+    sigma   = sqrt(n * p_win * (1 - p_win))
     
     print(f"mean:   {mu:0.2f}")
     print(f"stdev:  {sigma:0.2f}\n")
