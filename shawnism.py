@@ -1,7 +1,8 @@
 from numpy                  import mean, std
 from polars                 import read_csv
-from plotly.graph_objects   import Figure, Histogram
+from plotly.graph_objects   import Figure, Histogram, Scatter
 from random                 import randint
+from scipy.stats            import binom
 from sys                    import argv
 from time                   import time
 
@@ -25,6 +26,7 @@ if __name__ == "__main__":
     n_samples   = 10_000
     limit       = float(argv[2])
     results     = []
+    theo_p      = [ binom.pmf(i, n_trades, 0.50) for i in range(n_trades) ]
 
     for i in range(n_samples):
 
@@ -55,12 +57,13 @@ if __name__ == "__main__":
 
                 k += 1
 
-        results.append(wins / n_trades)
+        results.append(wins)
 
     fig = Figure()
 
-    fig.add_trace(Histogram(x = results))
-    fig.add_vline(x = 0.5, line_color = "#FF00FF")
+    fig.add_trace(Scatter({ "x": [ i for i in range(n_trades)], "y": theo_p, "name": "theo" }))
+    fig.add_trace(Histogram(x = results, histnorm = "probability density"))
+    fig.add_vline(x = 50, line_color = "#FF00FF")
 
     fig.show()
 
