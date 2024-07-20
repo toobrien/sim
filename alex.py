@@ -106,8 +106,8 @@ def run(mode: str):
     pass_rate   = mean(results)
     ev          = mean(cost)
 
-    print(f"{mode + ' pass_rate':30}{pass_rate * 100:<10.2f}%")
-    print(f"{mode + ' ev':30}${ev:<10.2f}")
+    print(f"{mode + ' pass_rate':30}{pass_rate:<10.2f}")
+    print(f"{mode + ' ev':30}{ev:<10.2f}")
 
     return pass_rate, ev
 
