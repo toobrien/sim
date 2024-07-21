@@ -106,7 +106,7 @@ def run(mode: str):
     pass_rate   = mean(results)
     ev          = mean(cost)
 
-    print(f"{mode + ' pass_rate':30}{pass_rate:<10.2f}")
+    print(f"{mode + ' pass rate':30}{pass_rate:<10.2f}")
     print(f"{mode + ' ev':30}{ev:<10.2f}")
 
     return pass_rate, ev
@@ -144,10 +144,10 @@ if __name__ == "__main__":
     e_total                 = e_eval_fail + e_eval_pass_pa_fail + e_eval_pass_pa_pass
 
     print("\n")
-    print(f"{'case:':30}{'prob':10}{'cost':10}{'ev':10}")
-    print(f"{'eval fail:':30}{p_eval_fail:<10.2f}{c_eval_fail:<10.2f}{e_eval_fail:<10.2f}")
-    print(f"{'eval pass, pa_fail:':30}{p_eval_pass_pa_fail:<10.2f}{c_eval_pass_pa_fail:<10.2f}{e_eval_pass_pa_fail:<10.2f}")
-    print(f"{'eval pass, pa_pass:':30}{p_eval_pass_pa_pass:<10.2f}{c_eval_pass_pa_pass:<10.2f}{e_eval_pass_pa_pass:<10.2f}")
-    print(f"{'total:':30}{p_total:<10.2f}{'':10}{e_total:<10.2f}")
+    print(f"{'case':30}{'prob':10}{'cost':10}{'ev':10}")
+    print(f"{'eval fail':30}{p_eval_fail:<10.2f}{c_eval_fail:<10.2f}{e_eval_fail:<10.2f}")
+    print(f"{'eval pass, pa fail':30}{p_eval_pass_pa_fail:<10.2f}{c_eval_pass_pa_fail:<10.2f}{e_eval_pass_pa_fail:<10.2f}")
+    print(f"{'eval pass, pa pass':30}{p_eval_pass_pa_pass:<10.2f}{c_eval_pass_pa_pass:<10.2f}{e_eval_pass_pa_pass:<10.2f}")
+    print(f"{'total':30}{p_total:<10.2f}{'':10}{e_total:<10.2f}")
 
     print(f"\n{time() - t0:0.1f}s")
