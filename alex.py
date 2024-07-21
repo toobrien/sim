@@ -123,7 +123,7 @@ if __name__ == "__main__":
     print(f"{'trade cost ($):':30}{COSTS:<10.2f}")
     print(f"{'tp (ticks):':30}{TP_TICKS:<10.2f}")
     print(f"{'tp ($):':30}{TP_DOLLARS:<10.2f}")
-    print(f"{'tp (ticks):':30}{SL_TICKS:<10.2f}")
+    print(f"{'sl (ticks):':30}{SL_TICKS:<10.2f}")
     print(f"{'sl ($):':30}{SL_DOLLARS:<10.2f}")
     print(f"{'trials:':30}{TRIALS:<10}\n")
 
