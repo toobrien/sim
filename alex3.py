@@ -29,11 +29,13 @@ def params_a(equity: float):
 
         return 7 * CONTRACTS * TICK_VAL, 7 * CONTRACTS * TICK_VAL
 
+
 def params_b(equity: float):
 
     # static
 
     return 20 * CONTRACTS * TICK_VAL, 80 * CONTRACTS * TICK_VAL
+
 
 def params_c(equity: float):
 
@@ -71,7 +73,7 @@ def run(strategy: str):
 
             pnl_tick            =   ticks[j]
             equity              +=  pnl_tick
-            trailing_drawdown   =   min(max(drawdown, drawdown + equity), 0)
+            trailing_drawdown   =   min(max(drawdown, drawdown + equity), 100)
 
             if equity >= tp or equity <= sl:
 
