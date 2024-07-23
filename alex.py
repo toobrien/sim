@@ -52,7 +52,7 @@ def run(mode: str):
 
             pnl_tick            =   choice(POPULATION) * CONTRACTS * TICK_VAL
             equity              +=  pnl_tick
-            trailing_drawdown   =   max(trailing_drawdown, -drawdown + equity)
+            trailing_drawdown   =   min(max(trailing_drawdown, -drawdown + equity), 0)
 
             if equity >= tp or equity <= sl:
 
