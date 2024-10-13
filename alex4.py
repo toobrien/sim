@@ -8,12 +8,13 @@ class ftt_gt:
 
     def __init__(self):
 
+        self.day    = 0
+        self.equity = 0
         self.tp     = 7500
         self.dd     = 7500
         self.trail  = "daily"
-        self.equity = 0
-        self.day    = 0
         self.state  = None
+        self.alive  = True
 
     def get_next_trade_params(self):
 
@@ -30,7 +31,7 @@ def trial(mode: dict):
 
     account = MODES[mode]()
 
-    while (not account.state):
+    while (account.alive):
 
         account.get_next_trade_params()
 
