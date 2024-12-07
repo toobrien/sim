@@ -53,8 +53,6 @@ def fig_a(params: List):
 
     fig.show()
 
-    pass
-
 
 if __name__ == "__main__":
 
