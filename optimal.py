@@ -39,20 +39,21 @@ def fig_a(params: List):
 
             signal[i * MPD + j] = -signal[i * MPD + j]
 
+    returns = signal + noise
 
-    fig.add_trace(
-        {
-            "x": [ i for i in range(MPD) ],
-            "y": cumsum(noise[0:MPD])
-        }
-    )
+    for trace in [ 
+        ( returns, "returns" ),
+        ( noise, "noise" ),
+        ( signal, "signal" )
+    ]:
 
-    fig.add_trace(
-        {
-            "x": [ i for i in range(MPD) ],
-            "y": cumsum(signal[0:MPD])
-        }
-    )
+        fig.add_trace(
+            {
+                "x":        [ i for i in range(MPD) ],
+                "y":        cumsum(trace[0][0:MPD]),
+                "title":    trace[1]
+            }
+        )
 
     '''
     x = [
