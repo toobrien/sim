@@ -1,7 +1,7 @@
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    math                    import  sqrt
-from    numpy                   import  cumsum, percentile
+from    numpy                   import  array, concatenate, cumsum, percentile, tile
 from    numpy.random            import  normal
 from    sys                     import  argv
 from    time                    import  time
@@ -11,8 +11,7 @@ from    typing                  import  List
 MPD     = 390
 DPY     = 256
 IDX_STD = 0.02 * sqrt(1 / MPD)
-SIGNAL  = 0.01
-NOISE   = 1 - SIGNAL
+SIGNAL  = 0.0001 / MPD
 
 
 def check_dist(x: List):
@@ -30,27 +29,12 @@ def fig_a(params: List):
     
     fig             = go.Figure()
     N               = MPD * DPY
-    noise           = normal(0, IDX_STD, N) * NOISE
-    signal          = abs(normal(0, IDX_STD, N)) * SIGNAL
     half            = int(MPD / 2)
-    optimal_weights = [ 1 for i in range(N)]
-
-    for i in range(DPY):
-
-        for j in range(half):
-
-            signal[i * MPD + j] = -signal[i * MPD + j]
-
-    idx_returns = signal + noise
-
-    for i in range(DPY):
-
-        j = i * MPD
-
-        for k in range(half):
-
-            optimal_weights[j + k] = -1
-
+    noise           = normal(0, IDX_STD, N)
+    idx_returns     = array(noise)
+    signal          = tile(concatenate((array([ -SIGNAL for _ in range(half)]), array([ SIGNAL for _ in range(half) ]))), DPY)
+    idx_returns     = noise + signal
+    optimal_weights = tile(concatenate((array([ -1 for _ in range(half)]), array([ 1 for _ in range(half) ]))), DPY)
     optimal_returns = idx_returns * optimal_weights
 
     for trace in [ 
