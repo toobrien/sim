@@ -28,10 +28,12 @@ def check_dist(x: List):
 
 def fig_a(params: List):
     
-    fig     = go.Figure()
-    noise   = normal(0, IDX_STD, MPD * DPY) * NOISE
-    signal  = abs(normal(0, IDX_STD, MPD * DPY)) * SIGNAL
-    half    = int(MPD / 2)
+    fig             = go.Figure()
+    N               = MPD * DPY
+    noise           = normal(0, IDX_STD, N) * NOISE
+    signal          = abs(normal(0, IDX_STD, N)) * SIGNAL
+    half            = int(MPD / 2)
+    optimal_weights = [ 1 for i in range(N)]
 
     for i in range(DPY):
 
@@ -39,12 +41,23 @@ def fig_a(params: List):
 
             signal[i * MPD + j] = -signal[i * MPD + j]
 
-    returns = signal + noise
+    idx_returns = signal + noise
+
+    for i in range(DPY):
+
+        j = i * MPD
+
+        for k in range(half):
+
+            optimal_weights[j + k] = -1
+
+    optimal_returns = idx_returns * optimal_weights
 
     for trace in [ 
-        ( returns, "returns" ),
-        ( noise, "noise" ),
-        ( signal, "signal" )
+        ( idx_returns,      "idx_returns"       ),
+        ( noise,            "noise"             ),
+        ( signal,           "signal"            ),
+        ( optimal_returns,  "optimal_returns"   )
     ]:
 
         fig.add_trace(
