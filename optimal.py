@@ -52,15 +52,6 @@ def fig_a(params: List):
             }
         )
 
-    '''
-    x = [
-            cumsum(normal(0, IDX_STD, MPD))[-1]
-            for i in range(10_000)
-        ]
-    
-    check_dist(x)
-    '''
-
     fig.show()
 
     pass
