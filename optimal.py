@@ -46,8 +46,8 @@ def fig_a(params: List):
 
         fig.add_trace(
             {
-                "x":    [ i for i in range(MPD) ],
-                "y":    cumsum(trace[0][0:MPD]),
+                "x":    [ i for i in range(len(idx_returns)) ],
+                "y":    cumsum(trace[0]),
                 "name": trace[1]
             }
         )
