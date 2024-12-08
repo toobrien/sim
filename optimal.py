@@ -89,8 +89,6 @@ def fig_b(params: List):
         opt.append(cumsum(opt_)[-1])
         rnd.append(cumsum(rnd_)[-1])
 
-        pass
-
     fig = go.Figure()
 
     traces = [
@@ -102,6 +100,8 @@ def fig_b(params: List):
     for trace in traces:
 
         fig.add_trace(go.Histogram(x = trace[0], name = trace[1]))
+        
+        print(trace[1], percentile(trace[0], [ 2.5, 15, 50, 85, 97.5 ]))
 
     fig.show()
 
