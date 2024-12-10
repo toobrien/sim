@@ -142,21 +142,22 @@ def fig_c(params: List):
     # synthetic signal with 1% correlation
 
     N       = int(params[0]) * MPD * DPY
+    M       = int(N * 0.01)
     noise   = normal(0, IDX_STD, N)
     beta    = normal(0, IDX_STD, N)
-    M       = int(N * 0.01)
     index   = sample(range(len(noise)), M)
     alpha   = deepcopy(beta)
-    traces  = [
-                ( beta,  "0%",  1 ),
-                ( alpha, "1%",  2 )
-            ]
 
     for i in index:
 
         alpha[i] = noise[i] 
 
     fig = make_subplots(rows = 2, cols = 1)
+
+    traces = [
+                ( beta,  "0%",  1 ),
+                ( alpha, "1%",  2 )
+            ]
 
     for trace in traces:
     
@@ -167,7 +168,7 @@ def fig_c(params: List):
                     "y":        noise,
                     "name":     trace[1],
                     "mode":     "markers",
-                    "marker":   { "size": 2}
+                    "marker":   { "size": 2 }
                 }
             ),
             row = trace[2],
