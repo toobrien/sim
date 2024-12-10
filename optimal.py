@@ -1,8 +1,9 @@
 import  plotly.graph_objects    as      go
 from    math                    import  sqrt
-from    numpy                   import  array, concatenate, cumsum, full, percentile, tile
+from    numpy                   import  arange, array, concatenate, cumsum, full, mean, percentile, std, tile
 from    numpy.random            import  normal
 from    random                  import  randint, choice
+from    scipy.stats             import  norm
 from    sys                     import  argv
 from    time                    import  time
 from    typing                  import  List
@@ -26,6 +27,8 @@ def check_dist(x: List):
 
 
 def fig_a(params: List):
+
+    # 1-year return plot for index, noise, signal, and optimal
     
     fig             = go.Figure()
     N               = MPD * DPY
@@ -57,7 +60,10 @@ def fig_a(params: List):
 
 def fig_b(params: List):
 
+    # densities for N M-year runs of index, optimal, and random returns
+
     N               = int(params[0])
+    M               = int(params[1]) * DPY
     half            = int(MPD / 2)
     signal          = concatenate((array([ -SIGNAL for _ in range(half)]), array([ SIGNAL for _ in range(half) ])))
     optimal_weights = concatenate((array([ -1 for _ in range(half)]), array([ 1 for _ in range(half) ])))
@@ -72,7 +78,7 @@ def fig_b(params: List):
         opt_ = []
         rnd_ = []
 
-        for _ in range(DPY):
+        for _ in range(M):
 
             idx_return  = normal(0, IDX_STD, MPD) + signal
             opt_return  = optimal_weights * idx_return
@@ -97,13 +103,36 @@ def fig_b(params: List):
         ( rnd, "rnd" )
     ]
 
+    print(f"{'':8}{'mean':>8}{"std":>8}{'losers':>8}")
+
     for trace in traces:
 
-        fig.add_trace(go.Histogram(x = trace[0], name = trace[1]))
+        X       = trace[0]
+        mu      = mean(X)
+        sigma   = std(X)
+        X_      = arange(mu - 4 * sigma, mu + 4 * sigma, 0.01)
+        nd      = norm(loc = mu, scale = sigma)
+        Y_      = nd.pdf(X_)
+        p_lose  = nd.cdf(0)
         
-        print(trace[1], percentile(trace[0], [ 2.5, 15, 50, 85, 97.5 ]))
+        fig.add_trace(
+            go.Scatter(
+                {
+                    "x":    X_,
+                    "y":    Y_,
+                    "name": trace[1]
+                }
+            )
+        )
+        
+        print(f"{trace[1]:<8}{mu * 100:>7.2f}%{sigma * 100:>7.2f}%{p_lose * 100:>7.2f}%")
 
     fig.show()
+
+
+def fig_c(params: List):
+
+    pass
 
 
 if __name__ == "__main__":
@@ -113,7 +142,8 @@ if __name__ == "__main__":
     params      = argv[2:]
     figures     = {
                     "a": fig_a,
-                    "b": fig_b
+                    "b": fig_b,
+                    "c": fig_c
                 }
 
     figures[selection](params)
