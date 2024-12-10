@@ -1,8 +1,10 @@
-import  plotly.graph_objects    as      go
+from    copy                    import  deepcopy
 from    math                    import  sqrt
-from    numpy                   import  arange, array, concatenate, cumsum, full, mean, percentile, std, tile
+from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, full, mean, percentile, std, tile
 from    numpy.random            import  normal
-from    random                  import  randint, choice
+import  plotly.graph_objects    as      go
+from    plotly.subplots         import  make_subplots
+from    random                  import  randint, choice, sample
 from    scipy.stats             import  norm
 from    sys                     import  argv
 from    time                    import  time
@@ -13,6 +15,30 @@ MPD     = 390
 DPY     = 256
 IDX_STD = 0.02 * sqrt(1 / MPD)
 SIGNAL  = 0.0001 / MPD
+
+
+def get_returns(days: int):
+
+    half            = int(MPD / 2)
+    signal          = tile(concatenate((array([ -SIGNAL for _ in range(half)]), array([ SIGNAL for _ in range(half) ]))), days)
+    noise           = normal(0, IDX_STD, MPD * days)
+    optimal_weights = tile(concatenate((array([ -1 for _ in range(half)]), array([ 1 for _ in range(half) ]))), days)
+    population      = [ -1, 1 ]
+    idx_returns     = noise + signal
+    opt_returns     = idx_returns * optimal_weights
+    rnd_weights     = []
+
+    for _ in range(days):
+    
+        cut     = randint(0, half - 1)
+        weight  = choice(population)
+        weights = concatenate((full(cut, weight), full(half, -weight), full(half - cut, weight)))
+        
+        rnd_weights.extend(weights)
+
+    rnd_return = rnd_weights * idx_returns
+
+    return idx_returns, opt_returns, rnd_return
 
 
 def check_dist(x: List):
@@ -64,36 +90,17 @@ def fig_b(params: List):
 
     N               = int(params[0])
     M               = int(params[1]) * DPY
-    half            = int(MPD / 2)
-    signal          = concatenate((array([ -SIGNAL for _ in range(half)]), array([ SIGNAL for _ in range(half) ])))
-    optimal_weights = concatenate((array([ -1 for _ in range(half)]), array([ 1 for _ in range(half) ])))
-    population      = [ -1, 1 ]
     idx             = []
     opt             = []
     rnd             = []
     
     for _ in range(N):
 
-        idx_ = []
-        opt_ = []
-        rnd_ = []
+        idx_returns, opt_returns, rnd_returns = get_returns(M)
 
-        for _ in range(M):
-
-            idx_return  = normal(0, IDX_STD, MPD) + signal
-            opt_return  = optimal_weights * idx_return
-            cut         = randint(0, half - 1)
-            weight      = choice(population)
-            rnd_weight  = concatenate((full(cut, weight), full(half, -weight), full(half - cut, weight)))
-            rnd_return  = rnd_weight * idx_return
-
-            idx_.append(cumsum(idx_return)[-1])
-            opt_.append(cumsum(opt_return)[-1])
-            rnd_.append(cumsum(rnd_return)[-1])
-
-        idx.append(cumsum(idx_)[-1])
-        opt.append(cumsum(opt_)[-1])
-        rnd.append(cumsum(rnd_)[-1])
+        idx.append(cumsum(idx_returns)[-1])
+        opt.append(cumsum(opt_returns)[-1])
+        rnd.append(cumsum(rnd_returns)[-1])
 
     fig = go.Figure()
 
@@ -132,7 +139,45 @@ def fig_b(params: List):
 
 def fig_c(params: List):
 
-    pass
+    # synthetic signal with 1% correlation
+
+    N       = int(params[0]) * MPD * DPY
+    noise   = normal(0, IDX_STD, N)
+    beta    = normal(0, IDX_STD, N)
+    M       = int(N * 0.01)
+    index   = sample(range(len(noise)), M)
+    alpha   = deepcopy(beta)
+    traces  = [
+                ( beta,  "0%",  1 ),
+                ( alpha, "1%",  2 )
+            ]
+
+    for i in index:
+
+        alpha[i] = noise[i] 
+
+    fig = make_subplots(rows = 2, cols = 1)
+
+    for trace in traces:
+    
+        fig.add_trace(
+            go.Scattergl(
+                {
+                    "x":        trace[0],
+                    "y":        noise,
+                    "name":     trace[1],
+                    "mode":     "markers",
+                    "marker":   { "size": 2}
+                }
+            ),
+            row = trace[2],
+            col = 1
+        )
+
+    print(f"0%: {corrcoef(beta, noise)[0, 1]:0.4f}")
+    print(f"1%: {corrcoef(alpha, noise)[0, 1]:0.4f}")
+
+    fig.show()
 
 
 if __name__ == "__main__":
