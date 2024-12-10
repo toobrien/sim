@@ -60,7 +60,7 @@ def fig_a(params: List):
 
 def fig_b(params: List):
 
-    # densities for N M-year runs of index, optimal, and random returns
+    # densities, stats for N samples of M-year index, optimal trader, and random trader cumulative returns
 
     N               = int(params[0])
     M               = int(params[1]) * DPY
