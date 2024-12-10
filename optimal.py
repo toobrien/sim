@@ -110,8 +110,8 @@ def fig_b(params: List):
         X       = trace[0]
         mu      = mean(X)
         sigma   = std(X)
-        X_      = arange(mu - 4 * sigma, mu + 4 * sigma, 0.01)
         nd      = norm(loc = mu, scale = sigma)
+        X_      = arange(mu - 4 * sigma, mu + 4 * sigma, 0.01)
         Y_      = nd.pdf(X_)
         p_lose  = nd.cdf(0)
         
