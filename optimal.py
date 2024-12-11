@@ -17,7 +17,9 @@ IDX_STD = 0.02 * sqrt(1 / MPD)
 SIGNAL  = 0.0001 / MPD
 
 
-def get_returns(days: int):
+def get_returns_a(days: int):
+
+    # 1 bp signal
 
     half            = int(MPD / 2)
     signal          = tile(concatenate((array([ -SIGNAL for _ in range(half)]), array([ SIGNAL for _ in range(half) ]))), days)
@@ -39,6 +41,26 @@ def get_returns(days: int):
     rnd_return = rnd_weights * idx_returns
 
     return idx_returns, opt_returns, rnd_return
+
+
+def get_returns_b(days: int):
+
+    # 1% corr signal
+
+    N           = days * MPD
+    idx_returns = normal(0, IDX_STD, N)
+    signal      = normal(0, IDX_STD, N)
+    to_sync     = sample(range(len(idx_returns)), int(N * 0.1))
+
+    for i in to_sync:
+
+        signal[i] = idx_returns[i]
+
+    weights     = array([ val / abs(val) for val in signal ])
+    opt_returns = weights * idx_returns
+
+    return idx_returns, opt_returns, None
+    
 
 
 def check_dist(x: List):
@@ -90,25 +112,33 @@ def fig_b(params: List):
 
     N               = int(params[0])
     M               = int(params[1]) * DPY
+    MODE            = params[2]
+    r_func          = get_returns_a if MODE == "a" else get_returns_b
     idx             = []
     opt             = []
     rnd             = []
     
     for _ in range(N):
 
-        idx_returns, opt_returns, rnd_returns = get_returns(M)
+        idx_returns, opt_returns, rnd_returns = r_func(M)
 
         idx.append(cumsum(idx_returns)[-1])
         opt.append(cumsum(opt_returns)[-1])
-        rnd.append(cumsum(rnd_returns)[-1])
+
+        if MODE == "a":
+        
+            rnd.append(cumsum(rnd_returns)[-1])
 
     fig = go.Figure()
 
     traces = [
         ( idx, "idx" ),
-        ( opt, "opt" ),
-        ( rnd, "rnd" )
+        ( opt, "opt" )
     ]
+
+    if MODE == "b":
+
+        traces.append(( rnd, "rnd" ))
 
     print(f"{'':8}{'mean':>8}{"std":>8}{'losers':>8}")
 
@@ -193,7 +223,7 @@ def fig_c(params: List):
 
 def fig_d(params):
 
-    # 0% vs 1% signal equity curves
+    # equity curve comparisons
 
     pass
 
