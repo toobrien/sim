@@ -5,7 +5,7 @@ from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
 from    random                  import  randint, choice, sample
-from    scipy.stats             import  norm
+from    scipy.stats             import  norm, linregress
 from    sys                     import  argv
 from    time                    import  time
 from    typing                  import  List
@@ -150,13 +150,22 @@ def fig_c(params: List):
 
     for i in index:
 
-        alpha[i] = noise[i] 
+        alpha[i] = noise[i]
 
     fig = make_subplots(rows = 2, cols = 1)
 
+    X_beta                                      = arange(alpha.min(), alpha.max(), 0.0001 )
+    X_alpha                                     = arange(alpha.min(), alpha.max(), 0.0001 )
+    slope_beta, intercept_beta, r_beta, _, _    = linregress(beta, noise)
+    slope_alpha, intercept_alpha, r_alpha, _, _ = linregress(alpha, noise)
+    Y_beta                                      = intercept_beta + slope_beta * X_beta
+    Y_alpha                                     = intercept_alpha + slope_alpha * X_alpha
+
     traces = [
-                ( beta,  "0%",  1 ),
-                ( alpha, "1%",  2 )
+                ( beta,     noise,     "0%",       1, "markers"    ),
+                ( X_beta,   Y_beta,    "0% reg",   1, "lines"      ),
+                ( alpha,    noise,     "1%",       2, "markers"    ),
+                ( X_alpha,  Y_alpha,   "1% reg",   2, "lines"      )
             ]
 
     for trace in traces:
@@ -165,18 +174,19 @@ def fig_c(params: List):
             go.Scattergl(
                 {
                     "x":        trace[0],
-                    "y":        noise,
-                    "name":     trace[1],
-                    "mode":     "markers",
+                    "y":        trace[1],
+                    "name":     trace[2],
+                    "mode":     trace[4],
                     "marker":   { "size": 2 }
                 }
             ),
-            row = trace[2],
+            row = trace[3],
             col = 1
         )
 
-    print(f"0%: {corrcoef(beta, noise)[0, 1]:0.4f}")
-    print(f"1%: {corrcoef(alpha, noise)[0, 1]:0.4f}")
+    print(f"{'':10}{'corr':>10}{'r^2':>10}{'alpha':>10}{'beta':>10}")
+    print(f"{'0%':10}{corrcoef(beta, noise)[0, 1]:>10.4f}{r_beta**2:>10.4f}{intercept_beta:>10.4f}{slope_beta:>10.4f}")
+    print(f"{'1%:':10}{corrcoef(alpha, noise)[0, 1]:>10.4f}{r_alpha**2:>10.4f}{intercept_alpha:>10.4f}{slope_alpha:>10.4f}")
 
     fig.show()
 
