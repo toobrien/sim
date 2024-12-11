@@ -15,6 +15,7 @@ MPD     = 390
 DPY     = 256
 IDX_STD = 0.02 * sqrt(1 / MPD)
 SIGNAL  = 0.0001 / MPD
+DEBUG   = False
 
 
 def get_returns_a(days: int):
@@ -56,9 +57,7 @@ def get_returns_b(days: int):
     weights         = signal / abs(signal)
     opt_returns     = weights * idx_returns
 
-    if True:
-
-        # debug
+    if DEBUG:
 
         idx_returns_dly = idx_returns.reshape(-1, MPD).sum(axis = 1)
         signal_dly      = signal.reshape(-1, MPD).sum(axis = 1)
