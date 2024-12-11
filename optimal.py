@@ -52,20 +52,20 @@ def get_returns_b(days: int):
     M               = int(N * 0.01)
     idx_returns     = normal(0, IDX_STD, N)
     signal          = normal(0, IDX_STD, N)
-    to_sync         = sample(range(len(idx_returns)), M)
+    to_sync         = sample(range(N), M)
     signal[to_sync] = idx_returns[to_sync]
     weights         = signal / abs(signal)
-    opt_returns     = weights * idx_returns
+    strat_returns   = weights * idx_returns
 
     if DEBUG:
 
-        idx_returns_dly = idx_returns.reshape(-1, MPD).sum(axis = 1)
-        signal_dly      = signal.reshape(-1, MPD).sum(axis = 1)
-        opt_returns_dly = opt_returns.reshape(-1, MPD).sum(axis = 1)
+        idx_returns_dly     = idx_returns.reshape(-1, MPD).sum(axis = 1)
+        signal_dly          = signal.reshape(-1, MPD).sum(axis = 1)
+        strat_returns_dly   = strat_returns.reshape(-1, MPD).sum(axis = 1)
 
-        print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns_dly, signal_dly)[0, 1]:8.4f}{corrcoef(idx_returns, opt_returns)[0, 1]:8.4f}{corrcoef(idx_returns_dly, opt_returns_dly)[0, 1]:8.4f}")
+        print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns_dly, signal_dly)[0, 1]:8.4f}{corrcoef(idx_returns, strat_returns)[0, 1]:8.4f}{corrcoef(idx_returns_dly, strat_returns_dly)[0, 1]:8.4f}")
 
-    return idx_returns, opt_returns, None
+    return idx_returns, strat_returns, None
     
 
 
@@ -181,7 +181,7 @@ def fig_c(params: List):
     M               = int(N * 0.01)
     noise           = normal(0, IDX_STD, N)
     beta            = normal(0, IDX_STD, N)
-    index           = sample(range(len(noise)), M)
+    index           = sample(range(N), M)
     alpha           = deepcopy(beta)
     alpha[index]    = noise[index]
 
