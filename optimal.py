@@ -191,6 +191,13 @@ def fig_c(params: List):
     fig.show()
 
 
+def fig_d(params):
+
+    # 0% vs 1% signal equity curves
+
+    pass
+
+
 if __name__ == "__main__":
 
     t0          = time()
@@ -199,7 +206,8 @@ if __name__ == "__main__":
     figures     = {
                     "a": fig_a,
                     "b": fig_b,
-                    "c": fig_c
+                    "c": fig_c,
+                    "d": fig_d
                 }
 
     figures[selection](params)
