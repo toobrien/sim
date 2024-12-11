@@ -47,17 +47,16 @@ def get_returns_b(days: int):
 
     # 1% corr signal
 
-    N           = days * MPD
-    idx_returns = normal(0, IDX_STD, N)
-    signal      = normal(0, IDX_STD, N)
-    to_sync     = sample(range(len(idx_returns)), int(N * 0.1))
+    N               = days * MPD
+    M               = int(N * 0.01)
+    idx_returns     = normal(0, IDX_STD, N)
+    signal          = normal(0, IDX_STD, N)
+    to_sync         = sample(range(len(idx_returns)), M)
+    signal[to_sync] = idx_returns[to_sync]
+    weights         = signal / abs(signal)
+    opt_returns     = weights * idx_returns
 
-    for i in to_sync:
-
-        signal[i] = idx_returns[i]
-
-    weights     = array([ val / abs(val) for val in signal ])
-    opt_returns = weights * idx_returns
+    print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns, opt_returns)[0, 1]:8.4f}")
 
     return idx_returns, opt_returns, None
     
@@ -136,7 +135,7 @@ def fig_b(params: List):
         ( opt, "opt" )
     ]
 
-    if MODE == "b":
+    if MODE == "a":
 
         traces.append(( rnd, "rnd" ))
 
@@ -171,16 +170,13 @@ def fig_c(params: List):
 
     # synthetic signal with 1% correlation
 
-    N       = int(params[0]) * MPD * DPY
-    M       = int(N * 0.01)
-    noise   = normal(0, IDX_STD, N)
-    beta    = normal(0, IDX_STD, N)
-    index   = sample(range(len(noise)), M)
-    alpha   = deepcopy(beta)
-
-    for i in index:
-
-        alpha[i] = noise[i]
+    N               = int(params[0]) * MPD * DPY
+    M               = int(N * 0.01)
+    noise           = normal(0, IDX_STD, N)
+    beta            = normal(0, IDX_STD, N)
+    index           = sample(range(len(noise)), M)
+    alpha           = deepcopy(beta)
+    alpha[index]    = noise[index]
 
     fig = make_subplots(rows = 2, cols = 1)
 
