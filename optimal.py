@@ -56,7 +56,15 @@ def get_returns_b(days: int):
     weights         = signal / abs(signal)
     opt_returns     = weights * idx_returns
 
-    print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns, opt_returns)[0, 1]:8.4f}")
+    if True:
+
+        # debug
+
+        idx_returns_dly = idx_returns.reshape(-1, MPD).sum(axis = 1)
+        signal_dly      = signal.reshape(-1, MPD).sum(axis = 1)
+        opt_returns_dly = opt_returns.reshape(-1, MPD).sum(axis = 1)
+
+        print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns_dly, signal_dly)[0, 1]:8.4f}{corrcoef(idx_returns, opt_returns)[0, 1]:8.4f}{corrcoef(idx_returns_dly, opt_returns_dly)[0, 1]:8.4f}")
 
     return idx_returns, opt_returns, None
     
