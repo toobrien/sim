@@ -308,7 +308,7 @@ def fig_e(params: List):
 
     for _ in range(samples):
 
-        idx, strat, _ = get_returns_b(DPY)
+        idx, strat, _ = get_returns_b(DPS)
 
         idx_returns.append(cumsum(idx))
         strat_returns.append(cumsum(strat))
