@@ -299,10 +299,11 @@ def fig_d(params):
 
 def fig_e(params: List):
 
-    # 1% corr (daily) equity curves, median and percentiles
+    # 1% corr (daily) equity curves
     
     samples         = int(params[0])
     DPS             = int(params[1]) * DPY
+    mode            = params[2]
     idx_returns     = []
     strat_returns   = []
 
@@ -317,32 +318,37 @@ def fig_e(params: List):
 
     X = [ i for i in range(DPS) ]
 
-    for i in range(samples):
+    if mode == "raw":
 
-        fig.add_trace(
-            go.Scattergl(
-                {   
-                    "x": X,
-                    "y": idx_returns[i],
-                    "name": f"idx {i}",
-                    "marker": { "color": "#0000FF" }
-                }
-            )
-        )
+        for i in range(samples):
 
-        fig.add_trace(
-            go.Scattergl(
-                {   
-                    "x": X,
-                    "y": strat_returns[i],
-                    "name": f"strat {i}",
-                    "marker": { "color": "#FF0000" }
-                }
+            fig.add_trace(
+                go.Scattergl(
+                    {   
+                        "x": X,
+                        "y": idx_returns[i],
+                        "name": f"idx {i}",
+                        "marker": { "color": "#0000FF" }
+                    }
+                )
             )
-        )
+
+            fig.add_trace(
+                go.Scattergl(
+                    {   
+                        "x": X,
+                        "y": strat_returns[i],
+                        "name": f"strat {i}",
+                        "marker": { "color": "#FF0000" }
+                    }
+                )
+            )
+        
+    elif mode == "summary":
+
+        pass
 
     fig.show()
-
 
 
 if __name__ == "__main__":
