@@ -1,6 +1,6 @@
 from    copy                    import  deepcopy
 from    math                    import  sqrt
-from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, full, mean, percentile, std, tile
+from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, full, histogram, mean, percentile, std, tile
 from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
@@ -46,26 +46,29 @@ def get_returns_a(days: int):
 
 def get_returns_b(days: int):
 
-    # 1% corr signal
+    # 1% corr signal, daily
 
-    N               = days * MPD
-    M               = int(N * 0.01)
-    idx_returns     = normal(0, IDX_STD, N)
-    signal          = normal(0, IDX_STD, N)
-    to_sync         = sample(range(N), M)
+    sigma           = IDX_STD / sqrt(1 / MPD)       
+    idx_returns     = normal(0, sigma, days)
+    signal          = normal(0, sigma, days)
+    to_sync         = sample(range(days), int(days * 0.01))
     signal[to_sync] = idx_returns[to_sync]
     weights         = signal / abs(signal)
     strat_returns   = weights * idx_returns
 
     if DEBUG:
 
+        '''
         idx_returns_dly     = idx_returns.reshape(-1, MPD).sum(axis = 1)
         signal_dly          = signal.reshape(-1, MPD).sum(axis = 1)
         strat_returns_dly   = strat_returns.reshape(-1, MPD).sum(axis = 1)
 
         print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns_dly, signal_dly)[0, 1]:8.4f}{corrcoef(idx_returns, strat_returns)[0, 1]:8.4f}{corrcoef(idx_returns_dly, strat_returns_dly)[0, 1]:8.4f}")
+        '''
 
-    return idx_returns, strat_returns, None
+        print(f"{corrcoef(idx_returns, signal)[0, 1]:8.4f}{corrcoef(idx_returns, strat_returns)[0, 1]:8.4f}")
+
+    return idx_returns, strat_returns, signal
     
 
 
@@ -114,19 +117,19 @@ def fig_a(params: List):
 
 def fig_b(params: List):
 
-    # densities, stats for N samples of M-year index, optimal trader, and random trader cumulative returns
+    # p-densities, stats for N samples of M-year index, optimal trader, and random trader cumulative returns
 
-    N               = int(params[0])
-    M               = int(params[1]) * DPY
+    samples         = int(params[0])
+    days            = int(params[1]) * DPY
     MODE            = params[2]
     r_func          = get_returns_a if MODE == "a" else get_returns_b
     idx             = []
     opt             = []
     rnd             = []
     
-    for _ in range(N):
+    for _ in range(samples):
 
-        idx_returns, opt_returns, rnd_returns = r_func(M)
+        idx_returns, opt_returns, rnd_returns = r_func(days)
 
         idx.append(cumsum(idx_returns)[-1])
         opt.append(cumsum(opt_returns)[-1])
@@ -138,13 +141,13 @@ def fig_b(params: List):
     fig = go.Figure()
 
     traces = [
-        ( idx, "idx" ),
-        ( opt, "opt" )
+        ( idx, "idx", "#0000FF", False ),
+        ( opt, "opt", "#FF0000", True  )
     ]
 
     if MODE == "a":
 
-        traces.append(( rnd, "rnd" ))
+        traces.append(( rnd, "rnd", "#CCCCCC", False ))
 
     print(f"{'':8}{'mean':>8}{"std":>8}{'losers':>8}")
 
@@ -161,12 +164,32 @@ def fig_b(params: List):
         fig.add_trace(
             go.Scatter(
                 {
-                    "x":    X_,
-                    "y":    Y_,
-                    "name": trace[1]
+                    "x":        X_,
+                    "y":        Y_,
+                    "name":     trace[1],
+                    "marker":   { "color": trace[2] }
                 }
             )
         )
+
+        fig.add_shape(
+            type = "line",
+            x0   = mu,
+            x1   = mu,
+            y0   = 0,
+            y1   = max(Y_),
+            line = { "color": trace[2], "dash": "dash" }
+        )
+
+        if trace[3]:
+
+            fig.add_annotation(
+                x           = mu,
+                y           = -0.01,
+                text        = f"{mu * 100:0.2f}%",
+                showarrow   = False,
+                font        = { "color": trace[2] }
+            )
         
         print(f"{trace[1]:<8}{mu * 100:>7.2f}%{sigma * 100:>7.2f}%{p_lose * 100:>7.2f}%")
 
@@ -175,7 +198,7 @@ def fig_b(params: List):
 
 def fig_c(params: List):
 
-    # synthetic signal with 1% correlation
+    # signal with 1% correlation, distplot and summary statistics
 
     N               = int(params[0]) * MPD * DPY
     M               = int(N * 0.01)
@@ -226,7 +249,60 @@ def fig_c(params: List):
 
 def fig_d(params):
 
-    # equity curve comparisons
+    # correlation check for 1% signal, daily
+
+    NBINS   = 100
+    N       = int(params[0])
+    years   = int(params[1])
+    corrs   = []
+
+    for _ in range(N):
+
+        idx_returns, strat_returns, signal = get_returns_b(years * DPY)
+
+        corrs.append(corrcoef(idx_returns, signal)[0, 1])
+
+    counts, _   = histogram(corrs, bins = NBINS)
+    mu          = mean(corrs)
+    sigma       = std(corrs)
+    nd          = norm(loc = mu, scale = sigma)
+    X           = arange(mu - 4 * sigma, mu + 4 * sigma, 0.001)
+    Y           = nd.pdf(X)
+
+    print(f"mu: {mu:8.4f}, std: {sigma:8.4f}")
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Histogram(
+                        x           = corrs,
+                        nbinsx      = NBINS,
+                        histnorm    = "probability", 
+                        name        = "corrs"
+                    )
+    )
+    
+    Y = Y * (max(counts) / len(corrs)) / Y.max() # rescale
+
+    fig.add_trace(
+                    go.Scattergl(
+                        {
+                            "x":    X,
+                            "y":    Y,
+                            "name": "model"
+                        }
+                    )
+                )
+
+    fig.show()
+
+
+def fig_e(params: List):
+
+    # 1% corr equity curves, median and percentiles
+    
+    samples = params[0]
+    years   = params[1]
 
     pass
 
@@ -240,7 +316,8 @@ if __name__ == "__main__":
                     "a": fig_a,
                     "b": fig_b,
                     "c": fig_c,
-                    "d": fig_d
+                    "d": fig_d,
+                    "e": fig_e
                 }
 
     figures[selection](params)
