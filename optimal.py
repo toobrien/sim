@@ -20,7 +20,7 @@ DEBUG   = False
 
 def get_returns_a(days: int):
 
-    # 1 bp signal
+    # 1 bp signal, 1-min
 
     half            = int(MPD / 2)
     signal          = tile(concatenate((array([ -SIGNAL for _ in range(half)]), array([ SIGNAL for _ in range(half) ]))), days)
@@ -299,7 +299,7 @@ def fig_d(params):
 
 def fig_e(params: List):
 
-    # 1% corr equity curves, median and percentiles
+    # 1% corr (daily) equity curves, median and percentiles
     
     samples = params[0]
     years   = params[1]
