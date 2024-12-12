@@ -117,7 +117,7 @@ def fig_a(params: List):
 
 def fig_b(params: List):
 
-    # p-densities, stats for N samples of M-year index, optimal trader, and random trader cumulative returns
+    # p-densities, stats for N samples of M-year index, optimal trader, and random trader (type a only) cumulative returns
 
     samples         = int(params[0])
     days            = int(params[1]) * DPY
@@ -301,10 +301,48 @@ def fig_e(params: List):
 
     # 1% corr (daily) equity curves, median and percentiles
     
-    samples = params[0]
-    years   = params[1]
+    samples         = int(params[0])
+    DPS             = int(params[1]) * DPY
+    idx_returns     = []
+    strat_returns   = []
 
-    pass
+    for _ in range(samples):
+
+        idx, strat, _ = get_returns_b(DPY)
+
+        idx_returns.append(cumsum(idx))
+        strat_returns.append(cumsum(strat))
+
+    fig = go.Figure()
+
+    X = [ i for i in range(DPS) ]
+
+    for i in range(samples):
+
+        fig.add_trace(
+            go.Scattergl(
+                {   
+                    "x": X,
+                    "y": idx_returns[i],
+                    "name": f"idx {i}",
+                    "marker": { "color": "#0000FF" }
+                }
+            )
+        )
+
+        fig.add_trace(
+            go.Scattergl(
+                {   
+                    "x": X,
+                    "y": strat_returns[i],
+                    "name": f"strat {i}",
+                    "marker": { "color": "#FF0000" }
+                }
+            )
+        )
+
+    fig.show()
+
 
 
 if __name__ == "__main__":
