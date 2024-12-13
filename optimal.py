@@ -387,7 +387,7 @@ def fig_e(params: List):
 
 def fig_f(params: List):
 
-     # 1% corr (daily) equity curves
+     # 1% corr (daily) portfolios
     
     stocks          = int(params[0])    
     DPS             = int(params[1]) * DPY
