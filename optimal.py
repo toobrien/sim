@@ -1,6 +1,6 @@
 from    copy                    import  deepcopy
-from    math                    import  sqrt
-from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, full, histogram, mean, median, percentile, std, tile
+from    math                    import  sqrt, e
+from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, diff, full, histogram, log, mean, percentile, std, sum, tile
 from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
@@ -385,6 +385,62 @@ def fig_e(params: List):
     fig.show()
 
 
+def fig_f(params: List):
+
+     # 1% corr (daily) equity curves
+    
+    stocks          = int(params[0])    
+    DPS             = int(params[1]) * DPY
+    initial_capital = 1_000_000
+    allocation      = initial_capital / stocks
+    X               = list(range(DPS))
+    pnls            = []
+
+    for _ in range(stocks):
+
+        _, strat, _ = get_returns_b(DPS)
+
+        pnls.append(allocation * e**cumsum(strat) - allocation)
+
+    total_pnl   = sum(pnls, axis = 0) 
+    pf_returns  = diff(log(total_pnl + initial_capital))
+    mu          = mean(pf_returns) * DPY
+    sigma       = std(pf_returns) * sqrt(DPY)
+    sharpe      = mu / sigma
+
+    fig = go.Figure()
+
+    for i in range(len(pnls)):
+
+        fig.add_trace(
+            go.Scattergl(
+                {
+                    "x":        X,
+                    "y":        log((allocation + pnls[i]) / allocation),
+                    "name":     f"stock {i + 1}",
+                    "marker":   { "color": "#0000FF" }
+                }
+            )
+        )
+
+    fig.add_trace(
+        go.Scattergl(
+            {
+                "x":        X,
+                "y":        log((initial_capital + total_pnl) / initial_capital),
+                "marker":   { "color": "#FF0000" },
+                "name":     "total pnl"
+            }
+        )
+    )
+
+    fig.add_hline(y = 0, line_color = "#FF00FF")
+
+    fig.update_layout(title = f"years = {int(DPS / DPY)}, stocks = {stocks}, ann. return = {mu * 100:0.2f}%, portfolio sharpe = {sharpe:0.2f}")
+
+    fig.show()
+
+
 if __name__ == "__main__":
 
     t0          = time()
@@ -395,7 +451,8 @@ if __name__ == "__main__":
                     "b": fig_b,
                     "c": fig_c,
                     "d": fig_d,
-                    "e": fig_e
+                    "e": fig_e,
+                    "f": fig_f
                 }
 
     figures[selection](params)
