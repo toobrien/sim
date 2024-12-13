@@ -1,6 +1,6 @@
 from    copy                    import  deepcopy
 from    math                    import  sqrt
-from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, full, histogram, mean, percentile, std, tile
+from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, full, histogram, mean, median, percentile, std, tile
 from    numpy.random            import  normal
 import  plotly.graph_objects    as      go
 from    plotly.subplots         import  make_subplots
@@ -345,6 +345,40 @@ def fig_e(params: List):
             )
         
     elif mode == "summary":
+
+        idx_returns     = array(idx_returns).T
+        strat_returns   = array(strat_returns).T
+        idx_mu          = mean(idx_returns, axis = 1)
+        idx_sig         = std(idx_returns, axis = 1)
+        strat_mu        = mean(strat_returns, axis = 1)
+        strat_sig       = std(strat_returns, axis = 1)
+
+        traces = [ 
+                    ( idx_mu, "idx mean", "#0000FF", "solid", "none" ),
+                    ( idx_mu - idx_sig, "idx -1 std", "#0000FF", "dot", "none" ),
+                    ( idx_mu + idx_sig, "idx +1 std", "#0000FF", "dot", "tonexty" ),
+                    ( strat_mu, "strat mean", "#FF0000", "solid", "none" ),
+                    ( strat_mu - strat_sig, "strat -1 std", "#FF0000", "dot", "none" ),
+                    ( strat_mu + strat_sig, "strat +1 std", "#FF0000", "dot", "tonexty" )
+    
+                ]
+
+        for trace in traces:
+        
+            fig.add_trace(
+                go.Scatter(
+                    {
+                        "x":    X,
+                        "y":    trace[0],
+                        "name": trace[1],
+                        "line": { 
+                                    "color":    trace[2], 
+                                    "dash":     trace[3]
+                                },
+                        "fill": trace[4]
+                    }
+                )
+            )
 
         pass
 
