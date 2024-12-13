@@ -385,20 +385,23 @@ def fig_e(params: List):
     fig.show()
 
 
-def fig_f(params: List):
+def f_helper(
+    stocks: int,
+    dps:    int,
+    row:    int,
+    col:    int,
+    ann:    int,
+    fig:    go.Figure    
+):
 
-     # 1% corr (daily) portfolios
-    
-    stocks          = int(params[0])    
-    DPS             = int(params[1]) * DPY
     initial_capital = 1_000_000
     allocation      = initial_capital / stocks
-    X               = list(range(DPS))
+    X               = list(range(dps))
     pnls            = []
 
     for _ in range(stocks):
 
-        _, strat, _ = get_returns_b(DPS)
+        _, strat, _ = get_returns_b(dps)
 
         pnls.append(allocation * e**cumsum(strat) - allocation)
 
@@ -407,8 +410,6 @@ def fig_f(params: List):
     mu          = mean(pf_returns) * DPY
     sigma       = std(pf_returns) * sqrt(DPY)
     sharpe      = mu / sigma
-
-    fig = go.Figure()
 
     for i in range(len(pnls)):
 
@@ -420,7 +421,9 @@ def fig_f(params: List):
                     "name":     f"stock {i + 1}",
                     "marker":   { "color": "#0000FF" }
                 }
-            )
+            ),
+            row = row,
+            col = col
         )
 
     fig.add_trace(
@@ -431,12 +434,36 @@ def fig_f(params: List):
                 "marker":   { "color": "#FF0000" },
                 "name":     "total pnl"
             }
-        )
+        ),
+        row = row,
+        col = col
     )
 
-    fig.add_hline(y = 0, line_color = "#FF00FF")
+    fig.add_hline(y = 0, line_color = "#FF00FF", row = row, col = col)
+    
+    title = f"stocks = {stocks}, ann. return = {mu * 100:0.2f}%, portfolio sharpe = {sharpe:0.2f}"
 
-    fig.update_layout(title = f"years = {int(DPS / DPY)}, stocks = {stocks}, ann. return = {mu * 100:0.2f}%, portfolio sharpe = {sharpe:0.2f}")
+    fig.layout.annotations[ann].text = title
+
+
+def fig_f(params: List):
+
+     # 1% corr (daily) portfolios
+    
+    DPS             = int(params[0]) * DPY
+    n_stocks        = [ 1, 2, 10, 50, 100, 250 ]
+    coords          = [ (1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2) ]
+    fig             = make_subplots(
+                        rows                = 3,
+                        cols                = 2,
+                        subplot_titles      = [ "." for i in range(len(n_stocks)) ],
+                        vertical_spacing    = 0.05,
+                        horizontal_spacing  = 0.05
+                    )
+
+    for i in range(len(n_stocks)):
+
+        f_helper(n_stocks[i], DPS, coords[i][0], coords[i][1], i, fig)
 
     fig.show()
 
