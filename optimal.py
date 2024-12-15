@@ -208,7 +208,11 @@ def fig_c(params: List):
     alpha           = deepcopy(beta)
     alpha[index]    = noise[index]
 
-    fig = make_subplots(rows = 2, cols = 1)
+    fig = make_subplots(
+                        rows                = 2,
+                        cols                = 1,
+                        vertical_spacing    = 0.02
+                    )
 
     X_beta                                      = arange(alpha.min(), alpha.max(), 0.0001 )
     X_alpha                                     = arange(alpha.min(), alpha.max(), 0.0001 )
