@@ -120,7 +120,7 @@ def fig_b(params: List):
     # p-densities, stats for N samples of M-year index, optimal trader, and random trader (type a only) cumulative returns
 
     samples         = int(params[0])
-    days            = int(params[1]) * DPY
+    days            = int(params[1])
     MODE            = params[2]
     r_func          = get_returns_a if MODE == "a" else get_returns_b
     idx             = []
@@ -157,7 +157,7 @@ def fig_b(params: List):
         mu      = mean(X)
         sigma   = std(X)
         nd      = norm(loc = mu, scale = sigma)
-        X_      = arange(mu - 4 * sigma, mu + 4 * sigma, 0.01)
+        X_      = arange(mu - 4 * sigma, mu + 4 * sigma, 0.001)
         Y_      = nd.pdf(X_)
         p_lose  = nd.cdf(0)
         
@@ -180,6 +180,7 @@ def fig_b(params: List):
             y1   = max(Y_),
             line = { "color": trace[2], "dash": "dash" }
         )
+        
 
         if trace[3]:
 
@@ -472,6 +473,11 @@ def fig_f(params: List):
     fig.show()
 
 
+def fig_g(params: List):
+
+    pass
+
+
 if __name__ == "__main__":
 
     t0          = time()
@@ -483,7 +489,8 @@ if __name__ == "__main__":
                     "c": fig_c,
                     "d": fig_d,
                     "e": fig_e,
-                    "f": fig_f
+                    "f": fig_f,
+                    "g": fig_g
                 }
 
     figures[selection](params)
