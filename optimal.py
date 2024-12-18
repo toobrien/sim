@@ -521,6 +521,11 @@ def fig_g(params: List):
     show_acf_plot(noise_ret, n_lags, "noise")
 
 
+def fig_h(params: List):
+
+    pass
+
+
 if __name__ == "__main__":
 
     t0          = time()
@@ -533,7 +538,8 @@ if __name__ == "__main__":
                     "d": fig_d,
                     "e": fig_e,
                     "f": fig_f,
-                    "g": fig_g
+                    "g": fig_g,
+                    "h": fig_h
                 }
 
     figures[selection](params)
