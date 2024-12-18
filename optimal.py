@@ -517,8 +517,8 @@ def fig_g(params: List):
     n_lags      = 240
     noise_ret   = normal(0, 0.02 * sqrt(1 / MPD), N)
     
-    show_acf_plot(spx_ret, 240, "spx")
-    show_acf_plot(noise_ret, 240, "noise")
+    show_acf_plot(spx_ret, n_lags, "spx")
+    show_acf_plot(noise_ret, n_lags, "noise")
 
 
 if __name__ == "__main__":
