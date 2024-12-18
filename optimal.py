@@ -1,14 +1,16 @@
-from    copy                    import  deepcopy
-from    math                    import  sqrt, e
-from    numpy                   import  arange, array, concatenate, corrcoef, cumsum, diff, full, histogram, log, mean, percentile, std, sum, tile
-from    numpy.random            import  normal
-import  plotly.graph_objects    as      go
-from    plotly.subplots         import  make_subplots
-from    random                  import  randint, choice, sample
-from    scipy.stats             import  norm, linregress
-from    sys                     import  argv
-from    time                    import  time
-from    typing                  import  List
+from    copy                        import  deepcopy
+from    math                        import  sqrt, e
+from    numpy                       import  abs, arange, array, concatenate, corrcoef, cumsum, diff, full, histogram, log, mean, percentile, std, sqrt, sum, tile
+from    numpy.random                import  normal
+from    polars                      import  read_csv
+import  plotly.graph_objects        as      go
+from    plotly.subplots             import  make_subplots
+from    random                      import  randint, choice, sample
+from    scipy.stats                 import  norm, linregress
+from    statsmodels.tsa.stattools   import  acf
+from    sys                         import  argv
+from    time                        import  time
+from    typing                      import  List
 
 
 MPD     = 390
@@ -473,9 +475,50 @@ def fig_f(params: List):
     fig.show()
 
 
+def show_acf_plot(
+    returns:    List,
+    lags:       int,
+    name:       str
+):
+
+    N           = len(returns)
+    lags        = 180
+    acfs        = acf(returns, fft = True, nlags = lags)[1:]
+    z_scores    = acfs * sqrt(N)
+    #alpha       = 0.05
+    #p_values    = 2 * (1 - norm.cdf(abs(z_scores)))
+    X           = [ i for i in range(1, lags) ]
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            {
+                "x":    X,
+                "y":    acfs,
+                "name": f"{name} acfs",
+                "mode": "markers"
+            }
+        )
+    )
+
+    fig.add_hline(y = 1.96 / sqrt(N))
+    fig.add_hline(y = -1.96 / sqrt(N))
+
+    fig.show()
+
+
 def fig_g(params: List):
 
-    pass
+    # acf, white noise vs index data
+
+    spx_ret     = diff(log(read_csv("~/trading/index_data/SPX/SPX_1m.csv")["close"]))
+    N           = len(spx_ret)
+    n_lags      = 240
+    noise_ret   = normal(0, 0.02 * sqrt(1 / MPD), N)
+    
+    show_acf_plot(spx_ret, 240, "spx")
+    show_acf_plot(noise_ret, 240, "noise")
 
 
 if __name__ == "__main__":
