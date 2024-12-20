@@ -584,11 +584,11 @@ def fig_h(params: List):
 
             opt.append(opt[i - 1])
 
-    traces      = [
-                    ( cumsum(noise)[:max_disp], f"noise (sum_acf = {sum(noise_acf[1:]):0.2f})", "#0000FF" ),
-                    ( cumsum(trend)[:max_disp], f"trend (sum_acf = {sum(trend_acf[1:]):0.2f})", "#FF00FF" ),
-                    ( opt[:max_disp], f"optimal (ann. return = {opt[-1] * N / (MPD * DPY) * 100:0.2f}%)", "#00FFFF" )
-                ]
+    traces  = [
+                ( cumsum(noise)[:max_disp], f"noise (sum_acf = {sum(noise_acf[1:]):0.2f})", "#0000FF" ),
+                ( cumsum(trend)[:max_disp], f"trend (sum_acf = {sum(trend_acf[1:]):0.2f})", "#FF00FF" ),
+                ( opt[:max_disp], f"optimal (ann. return = {opt[-1] * N / (MPD * DPY) * 100:0.2f}%)", "#00FFFF" )
+            ]
 
     for trace in traces:
 
