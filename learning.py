@@ -522,33 +522,60 @@ def fig_g(params: List):
     show_acf_plot(noise_ret, n_lags, "noise")
 
 
+def add_trend(
+    source: List,
+    lags:   List,
+    corrs:  List
+):
+
+    N           = len(source)
+    K           = len(lags)
+    trend       = source.copy()
+    population  = [ True, False ]
+
+    for i in range(K):
+
+        lag     = lags[i]
+        weights = [ corrs[i], 1 - corrs[i] ] 
+
+        for j in range(lag, N):
+
+            flip = choices(population, weights)[0]
+
+            if flip:
+                
+                #trend[i]    = trend[j - lag] 
+                sign        = trend[j - lag] / abs(trend[j - lag])
+                trend[j]    = abs(trend[j]) * sign
+
+    return trend
+
+
 def fig_h(params: List):
 
     # trending vs. noise
 
     N           = int(params[0])
-    lag         = int(params[1])
-    corr        = float(params[2])
+    lags        = [ int(i) for i in params[1].split(":") ]
+    corrs       = [ float(i) for i in params[2].split(":") ]
+    max_disp    = int(params[3]) if len(params) > 3 else N
     noise       = normal(0, IDX_STD, N)
-    trend       = noise.copy()
-    population  = [ True, False ]
-    weights     = [ corr, 1 - corr ]
+    trend       = add_trend(noise, lags, corrs)
+    noise_acf   = acf(noise, fft = True, nlags = max(lags))
+    trend_acf   = acf(trend, fft = True, nlags = max(lags))
 
-    for i in range(lag, N):
+    print(f"{'lag':<10}{'noise':>10}{'trend':>10}")
+    
+    for i in range(max(lags) + 1):
 
-        flip = choices(population, weights)[0]
-
-        if flip:
-        
-            lag_val  = trend[i - lag]
-            trend[i] = lag_val #trend[i] * lag_val / abs(lag_val)
+        print(f"{i:<10}{noise_acf[i]:>10.4f}{trend_acf[i]:>10.4f}")
 
     fig = go.Figure()
 
     X       = [ i for i in range(N) ]
     traces  = [
-                ( noise, "noise", "#0000FF" ),
-                ( trend, "trend", "#FF00FF" )
+                ( cumsum(noise)[:max_disp], "noise", "#0000FF" ),
+                ( cumsum(trend)[:max_disp], f"trend (corr = {trend_acf[max(lags)]:0.4f})", "#FF00FF" )
             ]
 
     for trace in traces:
@@ -556,26 +583,16 @@ def fig_h(params: List):
         fig.add_trace(
             go.Scattergl(
                 {
-                    "x":        X,
-                    "y":        cumsum(trace[0]),
-                    "name":     trace[1],
-                    "marker":   { "color": trace[2] }
+                    "x":    X,
+                    "y":    trace[0],
+                    "name": trace[1],
+                    "line": { "color": trace[2], "shape": "hv" },
                 }
             )
         )
 
+    fig.update_layout(xaxis = { "rangeslider": { "visible": False }})
     fig.show()
-
-    noise_acf = acf(noise, fft = True, nlags = 2 * lag)
-    trend_acf = acf(trend, fft = True, nlags = 2 * lag)
-
-    print(f"{'lag':<10}{'noise':>10}{'trend':>10}")
-    
-    for i in range(2 * lag):
-
-        print(f"{i:<10}{noise_acf[i]:>10.4f}{trend_acf[i]:>10.4f}")
-
-    pass
 
 
 if __name__ == "__main__":
