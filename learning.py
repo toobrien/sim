@@ -5,7 +5,7 @@ from    numpy.random                import  normal
 from    polars                      import  read_csv
 import  plotly.graph_objects        as      go
 from    plotly.subplots             import  make_subplots
-from    random                      import  randint, choice, sample
+from    random                      import  randint, choice, choices, sample
 from    scipy.stats                 import  norm, linregress
 from    statsmodels.tsa.stattools   import  acf
 from    sys                         import  argv
@@ -512,7 +512,8 @@ def fig_g(params: List):
 
     # acf, white noise vs index data
 
-    spx_ret     = diff(log(read_csv("~/trading/index_data/SPX/SPX_1m.csv")["close"]))
+    years       = 5
+    spx_ret     = diff(log(read_csv("~/trading/index_data/SPX/SPX_1m.csv")["close"]))[-MPD * DPY * years:]
     N           = len(spx_ret)
     n_lags      = 240
     noise_ret   = normal(0, 0.02 * sqrt(1 / MPD), N)
@@ -522,6 +523,57 @@ def fig_g(params: List):
 
 
 def fig_h(params: List):
+
+    # trending vs. noise
+
+    N           = int(params[0])
+    lag         = int(params[1])
+    corr        = float(params[2])
+    noise       = normal(0, IDX_STD, N)
+    trend       = noise.copy()
+    population  = [ True, False ]
+    weights     = [ corr, 1 - corr ]
+
+    for i in range(lag, N):
+
+        flip = choices(population, weights)[0]
+
+        if flip:
+        
+            lag_val  = trend[i - lag]
+            trend[i] = lag_val #trend[i] * lag_val / abs(lag_val)
+
+    fig = go.Figure()
+
+    X       = [ i for i in range(N) ]
+    traces  = [
+                ( noise, "noise", "#0000FF" ),
+                ( trend, "trend", "#FF00FF" )
+            ]
+
+    for trace in traces:
+
+        fig.add_trace(
+            go.Scattergl(
+                {
+                    "x":        X,
+                    "y":        cumsum(trace[0]),
+                    "name":     trace[1],
+                    "marker":   { "color": trace[2] }
+                }
+            )
+        )
+
+    fig.show()
+
+    noise_acf = acf(noise, fft = True, nlags = 2 * lag)
+    trend_acf = acf(trend, fft = True, nlags = 2 * lag)
+
+    print(f"{'lag':<10}{'noise':>10}{'trend':>10}")
+    
+    for i in range(2 * lag):
+
+        print(f"{i:<10}{noise_acf[i]:>10.4f}{trend_acf[i]:>10.4f}")
 
     pass
 
