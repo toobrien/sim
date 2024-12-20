@@ -484,7 +484,7 @@ def show_acf_plot(
     N           = len(returns)
     lags        = 180
     acfs        = acf(returns, fft = True, nlags = lags)[1:]
-    z_scores    = acfs * sqrt(N)
+    #z_scores    = acfs * sqrt(N)
     #alpha       = 0.05
     #p_values    = 2 * (1 - norm.cdf(abs(z_scores)))
     X           = [ i for i in range(1, lags) ]
@@ -528,25 +528,23 @@ def add_trend(
     corrs:  List
 ):
 
+    lags.insert(0, 0)
+    corrs.insert(0, 1 - sum(corrs))
+
+    max_lag     = max(lags)
     N           = len(source)
-    K           = len(lags)
     trend       = source.copy()
-    population  = [ True, False ]
 
-    for i in range(K):
+    for i in range(max_lag, N):
 
-        lag     = lags[i]
-        weights = [ corrs[i], 1 - corrs[i] ] 
+        lag = choices(lags, corrs)[0]
+            
+        #trend[i]   = trend[i - lag] 
+        sign        = trend[i - lag] / abs(trend[i - lag])
+        trend[i]    = abs(trend[i]) * sign
 
-        for j in range(lag, N):
-
-            flip = choices(population, weights)[0]
-
-            if flip:
-                
-                #trend[i]    = trend[j - lag] 
-                sign        = trend[j - lag] / abs(trend[j - lag])
-                trend[j]    = abs(trend[j]) * sign
+    lags.pop(0)
+    corrs.pop(0)
 
     return trend
 
@@ -572,11 +570,25 @@ def fig_h(params: List):
 
     fig = go.Figure()
 
-    X       = [ i for i in range(N) ]
-    traces  = [
-                ( cumsum(noise)[:max_disp], "noise", "#0000FF" ),
-                ( cumsum(trend)[:max_disp], f"trend (max_acf = {trend_acf[max(lags)]:0.4f})", "#FF00FF" )
-            ]
+    X           = [ i for i in range(N) ]
+    best_lag    = lags[corrs.index(max(corrs))]
+    opt         = [ 0 ]
+
+    for i in range(1, N):
+
+        if i % best_lag == 0:
+
+            opt.append(opt[i - 1] + trend[i - best_lag] / abs(trend[i - best_lag]) * trend[i])
+        
+        else:
+
+            opt.append(opt[i - 1])
+
+    traces      = [
+                    ( cumsum(noise)[:max_disp], f"noise (sum_acf = {sum(noise_acf[1:]):0.2f})", "#0000FF" ),
+                    ( cumsum(trend)[:max_disp], f"trend (sum_acf = {sum(trend_acf[1:]):0.2f})", "#FF00FF" ),
+                    ( opt[:max_disp], f"optimal (ann. return = {opt[-1] * N / (MPD * DPY) * 100:0.2f}%)", "#00FFFF" )
+                ]
 
     for trace in traces:
 
