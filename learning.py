@@ -575,7 +575,7 @@ def fig_h(params: List):
     X       = [ i for i in range(N) ]
     traces  = [
                 ( cumsum(noise)[:max_disp], "noise", "#0000FF" ),
-                ( cumsum(trend)[:max_disp], f"trend (corr = {trend_acf[max(lags)]:0.4f})", "#FF00FF" )
+                ( cumsum(trend)[:max_disp], f"trend (max_acf = {trend_acf[max(lags)]:0.4f})", "#FF00FF" )
             ]
 
     for trace in traces:
