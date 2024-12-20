@@ -566,9 +566,9 @@ def fig_h(params: List):
 
     print(f"{'lag':<10}{'noise':>10}{'trend':>10}")
     
-    for i in range(max(lags) + 1):
+    for i in range(1, max(lags) + 1):
 
-        print(f"{i:<10}{noise_acf[i]:>10.4f}{trend_acf[i]:>10.4f}")
+        print(f"{i:<10}{noise_acf[i]:>10.4f}{trend_acf[i]:>10.4f}{'' if i not in lags else '*':>3}")
 
     fig = go.Figure()
 
