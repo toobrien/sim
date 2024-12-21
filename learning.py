@@ -387,8 +387,6 @@ def fig_e(params: List):
                 )
             )
 
-        pass
-
     fig.show()
 
 
@@ -553,10 +551,10 @@ def fig_h(params: List):
 
     # trending vs. noise
 
-    N           = int(params[0])
+    N           = int(params[0]) * MPD
     lags        = [ int(i) for i in params[1].split(":") ]
     corrs       = [ float(i) for i in params[2].split(":") ]
-    max_disp    = int(params[3]) if len(params) > 3 else N
+    max_disp    = int(params[3]) * MPD if len(params) > 3 else N
     noise       = normal(0, IDX_STD, N)
     trend       = add_trend(noise, lags, corrs)
     noise_acf   = acf(noise, fft = True, nlags = max(lags))
@@ -568,7 +566,8 @@ def fig_h(params: List):
 
         print(f"{i:<10}{noise_acf[i]:>10.4f}{trend_acf[i]:>10.4f}{'' if i not in lags else '*':>3}")
 
-    fig = go.Figure()
+    fig_a = go.Figure()
+    fig_b = go.Figure()
 
     X           = [ i for i in range(N) ]
     best_lag    = lags[corrs.index(max(corrs))]
@@ -585,26 +584,55 @@ def fig_h(params: List):
             opt.append(opt[i - 1])
 
     traces  = [
-                ( cumsum(noise)[:max_disp], f"noise (sum_acf = {sum(noise_acf[1:]):0.2f})", "#0000FF" ),
-                ( cumsum(trend)[:max_disp], f"trend (sum_acf = {sum(trend_acf[1:]):0.2f})", "#FF00FF" ),
-                ( opt[:max_disp], f"optimal (ann. return = {opt[-1] * N / (MPD * DPY) * 100:0.2f}%)", "#00FFFF" )
+                ( cumsum(noise), f"noise (sum_acf = {sum(noise_acf[1:]):0.2f})", "#0000FF" ),
+                ( cumsum(trend), f"trend (sum_acf = {sum(trend_acf[1:]):0.2f})", "#FF00FF" ),
+                ( opt, f"optimal (ann. return = {opt[-1] * N / (MPD * DPY) * 100:0.2f}%)", "#00FFFF" )
             ]
 
     for trace in traces:
 
-        fig.add_trace(
+        Y = trace[0]
+
+        fig_a.add_trace(
             go.Scattergl(
                 {
                     "x":    X,
-                    "y":    trace[0],
+                    "y":    Y[:max_disp],
                     "name": trace[1],
-                    "line": { "color": trace[2], "shape": "hv" },
+                    "line": { "color": trace[2] },
                 }
             )
         )
 
-    fig.update_layout(xaxis = { "rangeslider": { "visible": False }})
-    fig.show()
+        Y       = diff(Y)
+        mu      = mean(Y) * MPD
+        sigma   = std(Y) * sqrt(MPD)
+        X_      = arange(mu - 4 * sigma, mu + 4 * sigma, 0.001)
+        Y_      = norm.pdf(X_, loc = mu, scale = sigma)
+
+        fig_b.add_trace(
+            go.Scatter(
+                {
+                    "x":    X_,
+                    "y":    Y_,
+                    "name": f"{trace[1].split("(")[0][:-1]:>10}, daily return = {mu * 100:0.2f}%",
+                    "line": { "color": trace[2] } 
+                }
+            )
+        )
+
+        fig_b.add_shape(
+            type = "line",
+            x0   = mu,
+            x1   = mu,
+            y0   = 0,
+            y1   = max(Y_),
+            line = { "color": trace[2], "dash": "dash" }
+        )
+
+    fig_a.update_layout(xaxis = { "rangeslider": { "visible": False }})
+    fig_a.show()
+    fig_b.show()
 
 
 if __name__ == "__main__":
