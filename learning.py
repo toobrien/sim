@@ -549,7 +549,7 @@ def add_trend(
 
 def fig_h(params: List):
 
-    # trending vs. noise
+    # trending vs. noise, eq curve and daily dist
 
     N           = int(params[0]) * MPD
     lags        = [ int(i) for i in params[1].split(":") ]
@@ -635,6 +635,66 @@ def fig_h(params: List):
     fig_b.show()
 
 
+def fig_j(params: List):
+
+    # pearson's r vs r^2
+
+    N       = int(params[0])
+    y_scale = float(params[1])
+    X       = normal(0, IDX_STD, N)
+    Y       = normal(0, IDX_STD * y_scale, N)
+
+    for i in range(N):
+
+        Y[i]   = abs(Y[i]) * (X[i] / abs(X[i]))
+        #Y[i]   = X[i]
+    
+    x_mu                        = mean(X)
+    y_mu                        = mean(Y)
+    r                           = corrcoef(X, Y)[0, 1]
+    slope, intercept, r_, _, _  = linregress(X, Y)
+    X_                          = arange(min(X), max(X), 0.0001)
+    model_disp                  = array([ slope * x + intercept for x in X_ ])
+    model                       = array([ slope * x + intercept for x in X])
+    ssr                         = sum((model - y_mu)**2)
+    tss                         = sum((Y - y_mu)**2)
+    r_2                         = 1 - (ssr / tss)
+
+    print(f"x_mu        {x_mu:>10.4f}")
+    print(f"y_mu        {y_mu:>10.4f}")
+    print(f"r           {r:>10.4f}")
+    print(f"r_          {r_:>10.4f}")
+    print(f"ssr         {ssr:>10.4f}")
+    print(f"tss         {tss:>10.4f}")
+    print(f"ssr / tss   {ssr / tss:>10.4f}")
+    print(f"r^2         {r_2:>10.4f}")
+
+
+    fig = go.Figure()
+
+    traces = [
+        ( X, Y, "XY", "markers" ),
+        ( X_, model_disp, "model", "lines" )
+    ]
+
+    for trace in traces:
+
+        fig.add_trace(
+            go.Scattergl(
+                {
+                    "x":    trace[0],
+                    "y":    trace[1],
+                    "mode": trace[3],
+                    "name": trace[2]
+                }
+            )
+        )
+
+    fig.show()
+
+    pass
+
+
 if __name__ == "__main__":
 
     t0          = time()
@@ -648,7 +708,8 @@ if __name__ == "__main__":
                     "e": fig_e,
                     "f": fig_f,
                     "g": fig_g,
-                    "h": fig_h
+                    "h": fig_h,
+                    "j": fig_j
                 }
 
     figures[selection](params)
