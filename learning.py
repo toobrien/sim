@@ -654,20 +654,23 @@ def fig_j(params: List):
     r                           = corrcoef(X, Y)[0, 1]
     slope, intercept, r_, _, _  = linregress(X, Y)
     X_                          = arange(min(X), max(X), 0.0001)
-    model_disp                  = array([ slope * x + intercept for x in X_ ])
-    model                       = array([ slope * x + intercept for x in X])
-    ssr                         = sum((model - y_mu)**2)
+    model_disp                  = slope * X_ + intercept
+    model                       = slope * X + intercept
+    ssr                         = sum((Y - model)**2)
     tss                         = sum((Y - y_mu)**2)
     r_2                         = 1 - (ssr / tss)
 
     print(f"x_mu        {x_mu:>10.4f}")
     print(f"y_mu        {y_mu:>10.4f}")
+    print(f"slope       {slope:>10.4f}")
+    print(f"intercept   {intercept:>10.4f}")
     print(f"r           {r:>10.4f}")
     print(f"r_          {r_:>10.4f}")
+    print(f"r^2         {r**2:>10.4f}")
     print(f"ssr         {ssr:>10.4f}")
     print(f"tss         {tss:>10.4f}")
     print(f"ssr / tss   {ssr / tss:>10.4f}")
-    print(f"r^2         {r_2:>10.4f}")
+    print(f"r^2_        {r_2:>10.4f}")
 
 
     fig = go.Figure()
@@ -692,7 +695,64 @@ def fig_j(params: List):
 
     fig.show()
 
-    pass
+
+def fig_k(params: List):
+
+    # correlation examples (subplots)
+
+    N   = int(params[0])
+    mat = [ 
+            [ 0,    0.5    ],
+            [ 0.9,  0.99   ],
+        ]
+
+    fig = make_subplots(
+            rows                = len(mat), 
+            cols                = len(mat[0]),
+            vertical_spacing    = 0.05,
+            horizontal_spacing  = 0.05
+        )
+
+    for i in range(len(mat)):
+
+        row = mat[i]
+
+        for j in range(len(row)):
+
+            r = row[j]
+            X = normal(0, IDX_STD, N)
+            Y = normal(0, IDX_STD, N)
+            Y = X * r + Y * sqrt(1 - r**2)
+
+            slope, intercept, r, _, _ = linregress(X, Y)
+
+            model   = slope * X + intercept
+            traces  = [
+                        ( X, Y, "markers", { "size": 3, "color": "#0000FF" } ),
+                        ( X, model, "lines", { "color": "#FF0000", "width": 1 } )
+                    ]
+
+            for trace in traces:
+            
+                data = go.Scattergl(
+                            {
+                                "x":        trace[0],
+                                "y":        trace[1],
+                                "name":     f"r = {r:0.2f}",
+                                "mode":     trace[2]
+                            }
+                        )
+                
+                m_prop          = "marker" if trace[2] == "markers" else "line"
+                data[m_prop]  = trace[3]
+
+                fig.add_trace(
+                    data,
+                    row = i + 1,
+                    col = j + 1
+                )
+
+    fig.show()
 
 
 if __name__ == "__main__":
@@ -709,7 +769,8 @@ if __name__ == "__main__":
                     "f": fig_f,
                     "g": fig_g,
                     "h": fig_h,
-                    "j": fig_j
+                    "j": fig_j,
+                    "k": fig_k
                 }
 
     figures[selection](params)
