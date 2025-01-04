@@ -769,6 +769,8 @@ def fig_l(params: List):
     X               = [ i for i in range(DPY) ]
     fig             = go.Figure()
     res             = []
+    daily_wr        = 0
+    yearly_wr       = 0
 
     for i in range(N):
     
@@ -776,8 +778,10 @@ def fig_l(params: List):
         pnls            = days.sum(axis = 1)
         pnls            = init_val + cumsum(pnls)
         log_rets        = diff(log(pnls))
+        daily_wr        = daily_wr + sum([ 1 if i > 0 else 0 for i in log_rets ])
         cum_log_ret     = cumsum(log_rets)
         fin             = cum_log_ret[-1]
+        yearly_wr       = yearly_wr if fin <= 0 else yearly_wr + 1
         
         res.append(fin)
 
@@ -794,13 +798,17 @@ def fig_l(params: List):
                 )
             )
 
-    mu      = mean(res)
-    sigma   = std(res)
-    sharpe  = mu / sigma
+    mu          = mean(res)
+    sigma       = std(res)
+    sharpe      = mu / sigma
+    daily_wr    = daily_wr / (N * DPY) * 100
+    yearly_wr   = yearly_wr / N * 100
 
-    print(f"{'mu:':<10}{mu * 100:0.2f}%")
-    print(f"{'sigma:':<10}{sigma * 100:0.2f}%")
-    print(f"{'sharpe:':<10}{sharpe:0.2f}")
+    print(f"{'profitable:':<15}{yearly_wr:0.2f}%")
+    print(f"{'green days:':<15}{daily_wr:0.2f}%")
+    print(f"{'mu:':<15}{mu * 100:0.2f}%")
+    print(f"{'sigma:':<15}{sigma * 100:0.2f}%")
+    print(f"{'sharpe:':<15}{sharpe:0.2f}")
 
     if plot:
 
