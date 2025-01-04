@@ -537,9 +537,9 @@ def add_trend(
 
         lag = choices(lags, corrs)[0]
             
-        #trend[i]   = trend[i - lag] 
-        sign        = trend[i - lag] / abs(trend[i - lag])
-        trend[i]    = abs(trend[i]) * sign
+        trend[i]   = trend[i - lag] 
+        #sign        = trend[i - lag] / abs(trend[i - lag])
+        #trend[i]    = abs(trend[i]) * sign
 
     lags.pop(0)
     corrs.pop(0)
@@ -755,6 +755,62 @@ def fig_k(params: List):
     fig.show()
 
 
+def fig_l(params: List):
+
+    # empirical binomial sharpe
+
+    init_val        = int(params[0])
+    wr              = float(params[1])
+    win             = int(params[2])
+    lose            = -int(params[3])
+    trades_per_day  = int(params[4])
+    N               = int(params[5])
+    plot            = int(params[6])
+    X               = [ i for i in range(DPY) ]
+    fig             = go.Figure()
+    res             = []
+
+    for i in range(N):
+    
+        days            = array(choices(population = [ win, lose ], weights = [ wr, 1 - wr ], k = trades_per_day * DPY)).reshape(-1, trades_per_day)
+        pnls            = days.sum(axis = 1)
+        pnls            = init_val + cumsum(pnls)
+        log_rets        = diff(log(pnls))
+        cum_log_ret     = cumsum(log_rets)
+        fin             = cum_log_ret[-1]
+        
+        res.append(fin)
+
+        if plot:
+
+            fig.add_trace(
+                go.Scattergl(
+                    {
+                        "x":    X,
+                        "y":    cum_log_ret,
+                        "name": i,
+                        "line": { "color": "#0000FF" if fin >= 0 else "#FF0000" }
+                    }
+                )
+            )
+
+    mu      = mean(res)
+    sigma   = std(res)
+    sharpe  = mu / sigma
+
+    print(f"{'mu:':<10}{mu * 100:0.2f}%")
+    print(f"{'sigma:':<10}{sigma * 100:0.2f}%")
+    print(f"{'sharpe:':<10}{sharpe:0.2f}")
+
+    if plot:
+
+        fig.add_hline(y = 0, line_color = "#FF00FF")
+
+        fig.show()
+
+    pass
+
+
 if __name__ == "__main__":
 
     t0          = time()
@@ -770,7 +826,8 @@ if __name__ == "__main__":
                     "g": fig_g,
                     "h": fig_h,
                     "j": fig_j,
-                    "k": fig_k
+                    "k": fig_k,
+                    "l": fig_l
                 }
 
     figures[selection](params)
