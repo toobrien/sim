@@ -764,8 +764,9 @@ def fig_l(params: List):
     win             = int(params[2])
     lose            = -int(params[3])
     trades_per_day  = int(params[4])
-    N               = int(params[5])
-    plot            = int(params[6])
+    years           = float(params[5])
+    N               = int(params[6])
+    plot            = int(params[7])
     X               = [ i for i in range(DPY) ]
     fig             = go.Figure()
     res             = []
@@ -774,7 +775,7 @@ def fig_l(params: List):
 
     for i in range(N):
     
-        days            = array(choices(population = [ win, lose ], weights = [ wr, 1 - wr ], k = trades_per_day * DPY)).reshape(-1, trades_per_day)
+        days            = array(choices(population = [ win, lose ], weights = [ wr, 1 - wr ], k = int(trades_per_day * DPY * years))).reshape(-1, trades_per_day)
         pnls            = days.sum(axis = 1)
         pnls            = init_val + cumsum(pnls)
         log_rets        = diff(log(pnls))
@@ -798,12 +799,14 @@ def fig_l(params: List):
                 )
             )
 
-    mu          = mean(res)
-    sigma       = std(res)
+    mu          = mean(res) / years
+    sigma       = std(res) * sqrt(1 / years)
     sharpe      = mu / sigma
-    daily_wr    = daily_wr / (N * DPY) * 100
+    daily_wr    = daily_wr / (N * years * DPY) * 100
     yearly_wr   = yearly_wr / N * 100
 
+    print(f"{'traders:':<15}{N}")
+    print(f"{'years':<15}{years:0.2f}")
     print(f"{'profitable:':<15}{yearly_wr:0.2f}%")
     print(f"{'green days:':<15}{daily_wr:0.2f}%")
     print(f"{'mu:':<15}{mu * 100:0.2f}%")
