@@ -819,7 +819,36 @@ def fig_l(params: List):
 
         fig.show()
 
-    pass
+
+def fig_m(params: List):
+
+    bias            = float(params[0])
+    N               = int(params[1])
+    X               = [ i for i in range(N) ]
+    bias_weights    = [ bias, 1 - bias ]
+    population      = [ 1, -1 ]
+    fair            = cumsum(choices(population, k = N))
+    biased          = cumsum(choices(population, bias_weights, k = N))
+    fig             = go.Figure()
+    traces          = [
+                        ( fair, "fair", "#FF0000" ),
+                        ( biased, "biased", "#0000FF" )
+                    ]
+    
+    for trace in traces:
+
+        fig.add_trace(
+            go.Scattergl(
+                {
+                    "x":    X,
+                    "y":    trace[0],
+                    "name": trace[1],
+                    "line": { "color": trace[2] }
+                }
+            )
+        )
+
+    fig.show()
 
 
 if __name__ == "__main__":
@@ -838,7 +867,8 @@ if __name__ == "__main__":
                     "h": fig_h,
                     "j": fig_j,
                     "k": fig_k,
-                    "l": fig_l
+                    "l": fig_l,
+                    "m": fig_m
                 }
 
     figures[selection](params)
